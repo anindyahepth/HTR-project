@@ -80,8 +80,8 @@ def main():
         preds_str = converter.decode(preds_index.data, preds_size.data)
         recognized_text = preds_str[0]
 
-    print(preds.max(2))
-    #print(f"Recognized_text: {recognized_text}")
+    #print(preds.max(2))
+    print(f"Recognized_text: {recognized_text}")
 
 
 if __name__ == '__main__':
