@@ -13,6 +13,32 @@ from data import dataset
 from model import HTR_VT
 from functools import partial
 
+def create_model(model_type, **kwargs):
+    if model_type == 'vitmae':
+        model = MaskedAutoencoderViT(nb_cls,
+                                 img_size=img_size,
+                                 patch_size=(4, 64),
+                                 embed_dim=768,
+                                 depth=4,
+                                 num_heads=6,
+                                 mlp_ratio=4,
+                                 norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                                 **kwargs)
+    
+
+    elif model_type == 'vitdw':
+          model =  ViT(image_size=config.DATA.IMG_SIZE,
+                    patch_size=config.MODEL.ViT.PATCH_SIZE,
+                    num_classes=config.MODEL.NUM_CLASSES,
+                    dim=config.MODEL.ViT.DIM,
+                    depth=config.MODEL.ViT.DEPTHS,
+                    heads=config.MODEL.ViT.NUM_HEADS,
+                    mlp_dim=config.MODEL.ViT.MLP_DIM,
+                    dim_head=config.MODEL.ViT.DIM_HEAD,
+                    dropout=config.MODEL.DROP_RATE,
+                    emb_dropout=config.MODEL.DROP_RATE)
+    return model
+
 
 def compute_loss(args, model, image, batch_size, criterion, text, length):
     preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
