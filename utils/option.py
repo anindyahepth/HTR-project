@@ -7,8 +7,8 @@ def get_args_parser():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--out-dir', type=str, default='/content/HTR-VT/output', help='output directory')
-    parser.add_argument('--train-bs', default=8, type=int, help='train batch size')
-    parser.add_argument('--val-bs', default=1, type=int, help='validation batch size')
+    parser.add_argument('--train-bs', default=128, type=int, help='train batch size')
+    parser.add_argument('--val-bs', default=8, type=int, help='validation batch size')
     parser.add_argument('--num-workers', default=0, type=int, help='nb of workers')
     parser.add_argument('--eval-iter', default=100, type=int, help='nb of iterations to run evaluation')
     parser.add_argument('--total-iter', default=1000, type=int, help='nb of total iterations for training')
@@ -21,9 +21,9 @@ def get_args_parser():
     parser.add_argument('--seed', default=123, type=int, help='seed for initializing training. ')
 
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+', help='image size')
-    parser.add_argument('--attn-mask-ratio', default=0., type=float, help='attention drop_key mask ratio')
+    parser.add_argument('--attn-mask-ratio', default=0.1, type=float, help='attention drop_key mask ratio')
     parser.add_argument('--patch-size', default=[4, 32], type=int, nargs='+', help='patch size')
-    parser.add_argument('--mask-ratio', default=0.3, type=float, help='mask ratio')
+    parser.add_argument('--mask-ratio', default=0.4, type=float, help='mask ratio')
     parser.add_argument('--cos-temp', default=8, type=int, help='cosine similarity classifier temperature')
     parser.add_argument('--max-span-length', default=4, type=int, help='max mask length')
     parser.add_argument('--spacing', default=0, type=int, help='the spacing between two span masks')
@@ -40,7 +40,7 @@ def get_args_parser():
     parser.add_argument('--elastic-distortion-max-alpha', default=1, type=float)
     parser.add_argument('--elastic-distortion-min-sigma', default=1, type=int)
     parser.add_argument('--elastic-distortion-max-sigma', default=10, type=int)
-    parser.add_argument('--dila-ero-max-kernel', default=3, type=int )
+    parser.add_argument('--dila-ero-max-kernel', default=2, type=int )
     parser.add_argument('--jitter-contrast', default=0.4, type=float)
     parser.add_argument('--jitter-brightness', default=0.4, type=float )
     parser.add_argument('--jitter-saturation', default=0.4, type=float )
@@ -62,7 +62,7 @@ def get_args_parser():
     parser.add_argument('--proba', default=0.5, type=float)
 
     parser.add_argument('--ema-decay', default=0.9999, type=float, help='Exponential Moving Average (EMA) decay')
-    parser.add_argument('--alpha', default=0, type=float, help='kld loss ratio')
+    parser.add_argument('--alpha', default=1, type=float, help='kld loss ratio')
 
     subparsers = parser.add_subparsers(title="dataset setting", dest="subcommand")
 
