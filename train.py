@@ -10,7 +10,7 @@ from utils import utils
 from utils import sam
 from utils import option
 from data import dataset
-from model import HTR_VT
+from model import HTR_VT, ViT_DW
 from functools import partial
 
 def create_model(model_type, **kwargs):
@@ -27,22 +27,29 @@ def create_model(model_type, **kwargs):
     
 
     elif model_type == 'vitdw':
-          model =  ViT(image_size=config.DATA.IMG_SIZE,
-                    patch_size=config.MODEL.ViT.PATCH_SIZE,
-                    num_classes=config.MODEL.NUM_CLASSES,
-                    dim=config.MODEL.ViT.DIM,
-                    depth=config.MODEL.ViT.DEPTHS,
-                    heads=config.MODEL.ViT.NUM_HEADS,
-                    mlp_dim=config.MODEL.ViT.MLP_DIM,
-                    dim_head=config.MODEL.ViT.DIM_HEAD,
-                    dropout=config.MODEL.DROP_RATE,
-                    emb_dropout=config.MODEL.DROP_RATE,
-                    **kwargs )
+          model =  ViT(image_size,
+                    patch_size= (4,64),
+                    num_classes,
+                    dim= 768,
+                    depth= 4,
+                    heads= 6,
+                    mlp_dim= 128 ,
+                    dim_head= 64,
+                    dropout= 0.0,
+                    emb_dropout= 0.0,
+                    )
     return model
 
 
-def compute_loss(args, model, image, batch_size, criterion, text, length):
-    preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
+def compute_loss(args, model_type, image, batch_size, criterion, text, length):
+    model = create_model(model_type)
+     
+    if model_type == 'vitmae':
+       preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
+        
+    elif model_type == 'vitdw':
+        preds = model(image)
+    
     preds = preds.float()
     preds_size = torch.IntTensor([preds.size(1)] * batch_size).cuda()
     preds = preds.permute(1, 0, 2).log_softmax(2)
