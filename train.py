@@ -27,9 +27,9 @@ def create_model(model_type, **kwargs):
     
 
     elif model_type == 'vitdw':
-          model =  ViT(image_size,
+          model =  ViT(image_size = img_size,
                     patch_size= (4,64),
-                    num_classes,
+                    num_classes = nb_cls,
                     dim= 768,
                     depth= 4,
                     heads= 6,
@@ -72,7 +72,7 @@ def main():
     logger.info(json.dumps(vars(args), indent=4, sort_keys=True))
     writer = SummaryWriter(args.save_dir)
 
-    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = create_model(model_type, nb_cls=args.nb_cls, img_size=args.img_size[::-1])
 
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
