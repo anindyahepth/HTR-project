@@ -36,7 +36,8 @@ def create_model(model_type, **kwargs):
                     mlp_dim=config.MODEL.ViT.MLP_DIM,
                     dim_head=config.MODEL.ViT.DIM_HEAD,
                     dropout=config.MODEL.DROP_RATE,
-                    emb_dropout=config.MODEL.DROP_RATE)
+                    emb_dropout=config.MODEL.DROP_RATE,
+                    **kwargs )
     return model
 
 
