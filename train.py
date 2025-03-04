@@ -13,9 +13,8 @@ from data import dataset
 from model import HTR_VT, ViT_DW
 from functools import partial
 
-def create_model(model_type, **kwargs):
-    if model_type == 'vitmae':
-        model = MaskedAutoencoderViT(nb_cls,
+def create_model_vitmae(**kwargs):
+    model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
                                  patch_size=(4, 64),
                                  embed_dim=768,
@@ -25,9 +24,12 @@ def create_model(model_type, **kwargs):
                                  norm_layer=partial(nn.LayerNorm, eps=1e-6),
                                  **kwargs)
     
+    return model
 
-    elif model_type == 'vitdw':
-          model =  ViT(image_size = img_size,
+
+
+ def create_model_vitdw(**kwargs):
+     model =  ViT(image_size = img_size,
                     patch_size= (4,64),
                     num_classes = nb_cls,
                     dim= 768,
@@ -38,16 +40,17 @@ def create_model(model_type, **kwargs):
                     dropout= 0.0,
                     emb_dropout= 0.0,
                     )
-    return model
+     return model 
 
 
 def compute_loss(args, model_type, image, batch_size, criterion, text, length):
-    model = create_model(model_type)
      
     if model_type == 'vitmae':
+       model = create_model_vitmae()
        preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
         
     elif model_type == 'vitdw':
+        model = create_model_vitdw()
         preds = model(image)
     
     preds = preds.float()
@@ -72,7 +75,7 @@ def main():
     logger.info(json.dumps(vars(args), indent=4, sort_keys=True))
     writer = SummaryWriter(args.save_dir)
 
-    model = create_model(model_type=args.model_type, nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
 
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
@@ -118,10 +121,10 @@ def main():
         image = batch[0].cuda()
         text, length = converter.encode(batch[1])
         batch_size = image.size(0)
-        loss = compute_loss(args, model, image, batch_size, criterion, text, length)
+        loss = compute_loss(args, model_type, model, image, batch_size, criterion, text, length)
         loss.backward()
         optimizer.first_step(zero_grad=True)
-        compute_loss(args, model, image, batch_size, criterion, text, length).backward()
+        compute_loss(args, model_type, model, image, batch_size, criterion, text, length).backward()
         optimizer.second_step(zero_grad=True)
         model.zero_grad()
         model_ema.update(model, num_updates=nb_iter / 2)
