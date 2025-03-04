@@ -19,6 +19,7 @@ def get_args_parser():
     parser.add_argument('--use-wandb', action='store_true', default=False, help = 'wheteher use wandb, otherwise use tensorboard')
     parser.add_argument('--exp-name',type=str, default='IAM_HTR_ORIGAMI_NET', help='experimental name (save dir will be out_dir + exp_name)')
     parser.add_argument('--seed', default=123, type=int, help='seed for initializing training. ')
+    parser.add_argument('--model_type', type=str, default='vitmae', help='choice of vit model')
 
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+', help='image size')
     parser.add_argument('--attn-mask-ratio', default=0.1, type=float, help='attention drop_key mask ratio')
