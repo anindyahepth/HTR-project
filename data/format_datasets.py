@@ -69,8 +69,8 @@ def format_READ2016_line():
     """
     Format the READ 2016 dataset at line level with the official split (8,349 for training, 1,040 for validation and 1,138 for test)
     """
-    source_folder = "/content/HTR-VT/data/read2016"
-    target_folder = "/content/HTR-VT/data/read2016/lines"
+    source_folder = "/content/HTR-project/data/read2016"
+    target_folder = "/content/HTR-project/data/read2016/lines"
     if os.path.isdir(target_folder):
         shutil.rmtree(target_folder)
     os.makedirs(target_folder)
@@ -154,12 +154,12 @@ def format_READ2016_line():
 
 def pkl2txt(dataset_name):
     for i in ['train', 'valid', 'test']:
-        with open((f"/content/HTR-VT/data/{dataset_name}/lines/labels.pkl"), "rb") as f:
+        with open((f"/content/HTR-project/data/{dataset_name}/lines/labels.pkl"), "rb") as f:
             a = pickle.load(f)
             for k, v in a['ground_truth'][i].items():
                 head = k.split('.')[0]
                 text = v['text'].replace('¬', '')
-                with open(f'/content/HTR-VT/data/read2016/lines/{head}.txt', 'a') as t: t.write(text)
+                with open(f'/content/HTR-project/data/read2016/lines/{head}.txt', 'a') as t: t.write(text)
 
 
 def move_files_and_delete_folders(parent_folder):
