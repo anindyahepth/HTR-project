@@ -46,12 +46,12 @@ def main():
 
     parser.add_argument('--nb_cls', type=int, default=90)
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+')
-    #parser.add_argument('--data_path', type=str, default='/content/HTR-VT/data/read2016/lines/')
-    parser.add_argument('--pth_path', type=str, default='/content/HTR-VT/best_CER.pth')
-    #parser.add_argument('--train_data_list', type=str, default='/content/HTR-VT/data/read2016/train.ln')
+    #parser.add_argument('--data_path', type=str, default='/content/HTR-project/data/read2016/lines/')
+    parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
+    #parser.add_argument('--train_data_list', type=str, default='/content/HTR-project/data/read2016/train.ln')
     parser.add_argument('--seed', type=int, default=1234)
-    parser.add_argument('--dict_path', type=str, default='/content/HTR-VT/dict_alph')
-    parser.add_argument('--image_path', type=str, default='/content/HTR-VT/data/dida/10000/10000/1/1_10.jpg')
+    parser.add_argument('--dict_path', type=str, default='/content/HTR-project/dict_alph')
+    parser.add_argument('--image_path', type=str, default='/content/HTR-project/data/dida/10000/10000/1/1_10.jpg')
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
