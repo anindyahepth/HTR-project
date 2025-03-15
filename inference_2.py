@@ -6,6 +6,7 @@ import ast
 from collections import OrderedDict
 
 import torch
+import torch.nn as nn
 import torch.utils.data
 from PIL import Image
 from torchvision import transforms
@@ -13,7 +14,38 @@ from torchvision import transforms
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import utils
 #from data import dataset
-from model import HTR_VT
+from model.HTR-VT import MaskedAutoencoderViT
+from model.ViT_DW import ViT
+from functools import partial
+
+def create_model_vitmae(nb_cls, img_size, **kwargs):
+    model = MaskedAutoencoderViT(nb_cls,
+                                 img_size=img_size,
+                                 patch_size=(4, 64),
+                                 embed_dim=768,
+                                 depth=4,
+                                 num_heads=6,
+                                 mlp_ratio=4,
+                                 norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                                 **kwargs)
+    
+    return model
+
+
+
+def create_model_vitdw(image_size, num_classes):
+     model =  ViT(image_size = image_size,
+                    patch_size= (4, 64),
+                    num_classes = num_classes,
+                    dim= 768,
+                    depth= 4,
+                    heads= 6,
+                    mlp_dim= 128 ,
+                    dim_head= 64,
+                    dropout= 0.0,
+                    emb_dropout= 0.0,
+                    )
+     return model 
 
 
 def preprocess_image(image_path):
@@ -47,7 +79,7 @@ def main():
     parser.add_argument('--nb_cls', type=int, default=90)
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+')
     #parser.add_argument('--data_path', type=str, default='/content/HTR-project/data/read2016/lines/')
-    parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
+    #parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
     #parser.add_argument('--train_data_list', type=str, default='/content/HTR-project/data/read2016/train.ln')
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--dict_path', type=str, default='/content/HTR-project/dict_alph')
@@ -57,20 +89,20 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
 
-    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
-    ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
+    model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
 
-    model_dict = OrderedDict()
-    if 'model' in ckpt:
-        ckpt = ckpt['model']
+    # model_dict = OrderedDict()
+    # if 'model' in ckpt:
+    #     ckpt = ckpt['model']
 
-    unexpected_keys = ['state_dict_ema', 'optimizer']
-    for key in unexpected_keys:
-        if key in ckpt:
-            del ckpt[key]
+    # unexpected_keys = ['state_dict_ema', 'optimizer']
+    # for key in unexpected_keys:
+    #     if key in ckpt:
+    #         del ckpt[key]
 
 
-    model.load_state_dict(ckpt, strict= False)
+    # model.load_state_dict(ckpt, strict= False)
     model = model.to(device)
     model.eval()
 
