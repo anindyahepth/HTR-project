@@ -14,8 +14,8 @@ from torchvision import transforms
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import utils
 #from data import dataset
-from model.HTR-VT import MaskedAutoencoderViT
-from model.ViT_DW import ViT
+from model.HTR_VT import MaskedAutoencoderViT
+from model.ViTBNFFN_CNN import ViT
 from functools import partial
 
 def create_model_vitmae(nb_cls, img_size, **kwargs):
@@ -35,13 +35,14 @@ def create_model_vitmae(nb_cls, img_size, **kwargs):
 
 def create_model_vitdw(image_size, num_classes):
      model =  ViT(image_size = image_size,
-                    patch_size= (4, 64),
+                    patch_size= (64, 32),
                     num_classes = num_classes,
                     dim= 768,
                     depth= 4,
                     heads= 6,
                     mlp_dim= 128 ,
                     dim_head= 64,
+                    l_max =3,
                     dropout= 0.0,
                     emb_dropout= 0.0,
                     )
@@ -76,20 +77,21 @@ def dict_from_file_to_list(filepath):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--nb_cls', type=int, default=90)
+    parser.add_argument('--nb_cls', type=int, default=89)
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+')
     #parser.add_argument('--data_path', type=str, default='/content/HTR-project/data/read2016/lines/')
     #parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
     #parser.add_argument('--train_data_list', type=str, default='/content/HTR-project/data/read2016/train.ln')
     parser.add_argument('--seed', type=int, default=1234)
     parser.add_argument('--dict_path', type=str, default='/content/HTR-project/dict_alph')
-    parser.add_argument('--image_path', type=str, default='/content/HTR-project/data/dida/10000/10000/1/1_10.jpg')
+    parser.add_argument('--image_path', type=str, default='/content/HTR-project/test_1.jpeg')
     args = parser.parse_args()
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
 
-    model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    #model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = create_model_vitdw(image_size = (64, 512), num_classes = 89)
     # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
 
     # model_dict = OrderedDict()
@@ -102,7 +104,7 @@ def main():
     #         del ckpt[key]
 
 
-    # model.load_state_dict(ckpt, strict= False)
+    #model.load_state_dict(ckpt, strict= False)
     model = model.to(device)
     model.eval()
 
@@ -124,7 +126,7 @@ def main():
         recognized_text = preds_str[0]
 
   
-    #print(preds.max(2))
+    print(preds_index.shape)
     print(f"Recognized_text: {recognized_text}")
 
 
