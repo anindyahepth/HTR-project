@@ -73,13 +73,15 @@ class Attention(nn.Module):
 
 
 class Transformer(nn.Module):
-    def __init__(self, dim, depth, heads, dim_head, mlp_dim, l_max =3, dropout=0.):
+    def __init__(self, dim, depth, heads, dim_head, mlp_dim, Height, Width, l_max =3, dropout=0.):
         super().__init__()
         self.layers = nn.ModuleList([])
 
         self.gelu = nn.GELU()
         self.convs = nn.ModuleList([])
         self.batchnorms = nn.ModuleList([])
+        self.height = Height
+        self.width = Width
         self.l_max = l_max
 
         for _ in range(depth):
@@ -97,8 +99,8 @@ class Transformer(nn.Module):
             if i < self.l_max:
               shortcut = x
               b, n, d = shortcut.shape
-              h = int(n**0.5)
-              w = n // h
+              h = self.height
+              w = self.width
               shortcut = rearrange(shortcut, 'b (h w) d -> b d h w', h=h, w=w) 
               shortcut = self.gelu(shortcut)
               shortcut = self.batchnorms[i](shortcut)
@@ -137,7 +139,7 @@ class ViT(nn.Module):
         self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, dim))
         self.dropout = nn.Dropout(emb_dropout)
 
-        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, l_max, dropout)
+        self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, Height, Width, l_max, dropout)
 
         
         self.to_latent = nn.Identity()
