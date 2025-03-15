@@ -32,7 +32,7 @@ def create_model_vitmae(nb_cls, img_size, **kwargs):
 
 def create_model_vitdw(image_size, num_classes):
      model =  ViT(image_size = image_size,
-                    patch_size= (4, 64),
+                    patch_size= (64, 32),
                     num_classes = num_classes,
                     dim= 768,
                     depth= 4,
@@ -82,7 +82,7 @@ def main():
        model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
         
     elif model_type == 'vitdw':
-       model = create_model_vitdw(image_size= (512, 64), num_classes=args.nb_cls)
+       model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
 
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
