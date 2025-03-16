@@ -66,6 +66,9 @@ class CTCLabelConverter(object):
     def get_dict(self):
         return self.output_dict
 
+    def get_char(self):
+        return self.character
+
     def encode(self, text):
         length = [len(s) for s in text]
         text = ''.join(text)
