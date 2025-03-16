@@ -46,6 +46,8 @@ def create_model_vitdw(image_size, num_classes):
 
 
 def compute_loss(args, model_type, model, image, batch_size, criterion, text, length):
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
      
     if model_type == 'vitmae':
        preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
@@ -55,13 +57,14 @@ def compute_loss(args, model_type, model, image, batch_size, criterion, text, le
     
     preds = preds.float()
     # print(f"preds shape: {preds.shape}")
-    preds_size = torch.IntTensor([preds.size(1)] * batch_size).cuda()
+    preds_size = torch.IntTensor([preds.size(1)] * batch_size).to(device)
     preds = preds.permute(1, 0, 2).log_softmax(2)
 
     torch.backends.cudnn.enabled = False
-    loss = criterion(preds, text.cuda(), preds_size, length.cuda()).mean()
+    loss = criterion(preds, text.to(device), preds_size, length.to(device)).mean()
     torch.backends.cudnn.enabled = True
     return loss
+
 
 
 def main():
