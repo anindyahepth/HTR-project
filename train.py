@@ -87,8 +87,12 @@ def main():
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    logger.info(f"Using device: {device}")
+
     model.train()
-    model = model.cuda()
+    model.to(device)
+    
     model_ema = utils.ModelEma(model, args.ema_decay)
     model.zero_grad()
 
@@ -125,8 +129,9 @@ def main():
 
         optimizer.zero_grad()
         batch = next(train_iter)
-        image = batch[0].cuda()
+        image = batch[0].to(device)
         text, length = converter.encode(batch[1])
+        text, length = text.to(device), length.to(device) #text,length moved to device
         batch_size = image.size(0)
         loss = compute_loss(args, model_type, model, image, batch_size, criterion, text, length)
         loss.backward()
@@ -152,7 +157,8 @@ def main():
                 val_loss, val_cer, val_wer, preds, labels = valid.validation(model_ema.ema,
                                                                              criterion,
                                                                              val_loader,
-                                                                             converter)
+                                                                             converter,
+                                                                             device)
 
                 if val_cer < best_cer:
                     logger.info(f'CER improved from {best_cer:.4f} to {val_cer:.4f}!!!')
