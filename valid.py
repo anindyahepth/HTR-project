@@ -5,9 +5,8 @@ import torch.backends.cudnn as cudnn
 from utils import utils
 import editdistance
 
-
-def validation(model, criterion, evaluation_loader, converter):
-    """ validation or evaluation """
+def validation(model, criterion, evaluation_loader, converter, device):
+    """validation or evaluation with device support"""
 
     norm_ED = 0
     norm_ED_wer = 0
@@ -24,22 +23,23 @@ def validation(model, criterion, evaluation_loader, converter):
 
     for i, (image_tensors, labels) in enumerate(evaluation_loader):
         batch_size = image_tensors.size(0)
-        image = image_tensors.cuda()
+        image = image_tensors.to(device)  # Move input to the specified device
 
         text_for_loss, length_for_loss = converter.encode(labels)
+        text_for_loss, length_for_loss = text_for_loss.to(device), length_for_loss.to(device) #move labels to device
 
         preds = model(image)
         preds = preds.float()
-        preds_size = torch.IntTensor([preds.size(1)] * batch_size)
+        preds_size = torch.IntTensor([preds.size(1)] * batch_size).to(device) #move to device.
         preds = preds.permute(1, 0, 2).log_softmax(2)
 
-        torch.backends.cudnn.enabled = False
+        cudnn.enabled = False  # moved from torch.backends.cudnn
         cost = criterion(preds, text_for_loss, preds_size, length_for_loss).mean()
-        torch.backends.cudnn.enabled = True
+        cudnn.enabled = True
 
         _, preds_index = preds.max(2)
         preds_index = preds_index.transpose(1, 0).contiguous().view(-1)
-        preds_str = converter.decode(preds_index.data, preds_size.data)
+        preds_str = converter.decode(preds_index.cpu().data, preds_size.cpu().data) #move back to cpu for decoding.
         valid_loss += cost.item()
         count += 1
 
@@ -74,4 +74,4 @@ def validation(model, criterion, evaluation_loader, converter):
     CER = tot_ED / float(length_of_gt)
     WER = tot_ED_wer / float(length_of_gt_wer)
 
-    return val_loss, CER, WER, preds_str, labels
+    return val_loss, CER, WER, all_preds_str, all_labels
