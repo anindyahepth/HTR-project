@@ -100,8 +100,8 @@ class Transformer(nn.Module):
                 PreNorm(dim, FeedForward(dim, mlp_dim, Height, Width, dropout=dropout))
             ]))
 
-            self.convs.append(nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=3, stride=1, padding=1, groups=dim))
-            self.batchnorms.append(nn.BatchNorm2d(dim))
+            self.convs.append(resnet18_2d.ResNet18_2d(dim, dim))
+            # self.batchnorms.append(nn.BatchNorm2d(dim))
 
     def forward(self, x):
         for i, [attn, ff] in enumerate(self.layers):
@@ -112,8 +112,8 @@ class Transformer(nn.Module):
               h = self.height
               w = self.width
               shortcut = rearrange(shortcut, 'b (h w) d -> b d h w', h=h, w=w) 
-              shortcut = self.gelu(shortcut)
-              shortcut = self.batchnorms[i](shortcut)
+              # shortcut = self.gelu(shortcut)
+              # shortcut = self.batchnorms[i](shortcut)
               shortcut = self.convs[i](shortcut)
               shortcut = rearrange(shortcut, 'b d h w -> b (h w) d')
             
