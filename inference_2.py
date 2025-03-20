@@ -90,21 +90,21 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
 
-    #model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
-    model = create_model_vitdw(image_size = (64, 512), num_classes = 89)
+    model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    # model = create_model_vitdw(image_size = (64, 512), num_classes = 89)
     # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
 
-    # model_dict = OrderedDict()
-    # if 'model' in ckpt:
-    #     ckpt = ckpt['model']
+    model_dict = OrderedDict()
+    if 'model' in ckpt:
+        ckpt = ckpt['model']
 
-    # unexpected_keys = ['state_dict_ema', 'optimizer']
-    # for key in unexpected_keys:
-    #     if key in ckpt:
-    #         del ckpt[key]
+    unexpected_keys = ['state_dict_ema', 'optimizer']
+    for key in unexpected_keys:
+        if key in ckpt:
+            del ckpt[key]
 
 
-    #model.load_state_dict(ckpt, strict= False)
+    model.load_state_dict(ckpt, strict= False)
     model = model.to(device)
     model.eval()
 
