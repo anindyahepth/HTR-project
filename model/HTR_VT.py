@@ -111,7 +111,7 @@ class MaskedAutoencoderViT(nn.Module):
         self.embed_dim = embed_dim
         self.num_patches =1
         self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = nn.Parameter(torch.randn(1, self.num_patches, embed_dim))
+        self.pos_embed = None
         self.blocks = nn.ModuleList([
             Block(embed_dim, num_heads, self.num_patches,
                   mlp_ratio, qkv_bias=True, norm_layer=norm_layer)
@@ -120,10 +120,30 @@ class MaskedAutoencoderViT(nn.Module):
         self.norm = norm_layer(embed_dim, elementwise_affine=True)
         self.head = torch.nn.Linear(embed_dim, nb_cls)
 
-        #self.initialize_weights()
+        self.initialize_weights()
 
     
 
+
+    def initialize_weights(self):
+        # initialization
+        # initialize (and freeze) pos_embed by sin-cos embedding
+        # pos_embed = get_2d_sincos_pos_embed(self.embed_dim, self.grid_size)
+        # self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+   
+        # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
+        # w = self.patch_embed.proj.weight.data
+        # torch.nn.init.xavier_uniform_(w.view([w.shape[0], -1]))
+
+        # timm's trunc_normal_(std=.02) is effectively normal_(std=0.02) as cutoff is too big (2.)
+        # pos_embed = get_2d_sincos_pos_embed(self.embed_dim, [1, self.nb_query])
+        # self.qry_tokens.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+        torch.nn.init.normal_(self.mask_token, std=.02)
+
+        # initialize nn.Linear and nn.LayerNorm
+        self.apply(self._init_weights)
+
+    
     def _init_weights(self, m):
         if isinstance(m, nn.Linear):
             # we use xavier_uniform following official JAX ViT:
@@ -164,6 +184,7 @@ class MaskedAutoencoderViT(nn.Module):
         if use_masking:
             x = self.random_masking(x, mask_ratio, max_span_length)
         self.num_patches = x.shape[1]
+        self.pos_embed = nn.Parameter(torch.randn(1, self.num_patches, self.embed_dim))
         x = x + self.pos_embed
         # apply Transformer blocks
         for blk in self.blocks:
