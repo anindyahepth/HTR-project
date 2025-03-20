@@ -18,7 +18,6 @@ from functools import partial
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
-                                 patch_size=(4, 64),
                                  embed_dim=768,
                                  depth=4,
                                  num_heads=6,
