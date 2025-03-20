@@ -21,7 +21,6 @@ from functools import partial
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
-                                 patch_size=(4, 64),
                                  embed_dim=768,
                                  depth=4,
                                  num_heads=6,
@@ -77,7 +76,7 @@ def dict_from_file_to_list(filepath):
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('--nb_cls', type=int, default=89)
+    parser.add_argument('--nb_cls', type=int, default=90)
     parser.add_argument('--img-size', default=[512, 64], type=int, nargs='+')
     #parser.add_argument('--data_path', type=str, default='/content/HTR-project/data/read2016/lines/')
     #parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
@@ -92,7 +91,7 @@ def main():
 
     model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
     # model = create_model_vitdw(image_size = (64, 512), num_classes = 89)
-    # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
+    ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
 
     model_dict = OrderedDict()
     if 'model' in ckpt:
