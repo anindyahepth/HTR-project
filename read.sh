@@ -1,5 +1,5 @@
 python3 train.py --exp-name read \
---model-type 'vitdw' \
+--model-type 'vitmae' \
 --max-lr 1e-3 \
 --train-bs 128 \
 --val-bs 8 \
