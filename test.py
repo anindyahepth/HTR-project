@@ -9,8 +9,21 @@ import valid
 from utils import utils
 from utils import option
 from data import dataset
-from model import HTR_VT
+from model.HTR_VT import MaskedAutoencoderViT
 from collections import OrderedDict
+from functools import partial
+
+def create_model_vitmae(nb_cls, img_size, **kwargs):
+    model = MaskedAutoencoderViT(nb_cls=90,
+                                 img_size=img_size,
+                                 embed_dim=768,
+                                 depth=4,
+                                 num_heads=6,
+                                 mlp_ratio=4,
+                                 norm_layer=partial(nn.LayerNorm, eps=1e-6),
+                                 **kwargs)
+    
+    return model
 
 
 def main():
@@ -23,23 +36,37 @@ def main():
     logger = utils.get_logger(args.save_dir)
     logger.info(json.dumps(vars(args), indent=4, sort_keys=True))
 
-    model = HTR_VT.create_model(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+    model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
 
     pth_path = args.save_dir + '/best_CER.pth'
     logger.info('loading HWR checkpoint from {}'.format(pth_path))
-
-    ckpt = torch.load(pth_path, map_location='cpu')
+    
+    ckpt = torch.load(pth_path, map_location='cpu', weights_only = True)
     model_dict = OrderedDict()
-    pattern = re.compile('module.')
+    if 'model' in ckpt:
+        ckpt = ckpt['model']
 
-    for k, v in ckpt['state_dict_ema'].items():
-        if re.search("module", k):
-            model_dict[re.sub(pattern, '', k)] = v
-        else:
-            model_dict[k] = v
+    unexpected_keys = ['state_dict_ema', 'optimizer']
+    for key in unexpected_keys:
+        if key in ckpt:
+            del ckpt[key]
 
-    model.load_state_dict(model_dict, strict=True)
-    model = model.cuda()
+
+    model.load_state_dict(ckpt, strict= False)
+
+    # ckpt = torch.load(pth_path, map_location='cpu')
+    # model_dict = OrderedDict()
+    # pattern = re.compile('module.')
+
+    # for k, v in ckpt['state_dict_ema'].items():
+    #     if re.search("module", k):
+    #         model_dict[re.sub(pattern, '', k)] = v
+    #     else:
+    #         model_dict[k] = v
+
+    # model.load_state_dict(model_dict, strict=True)
+    
+    model = model.to(device)
 
     logger.info('Loading test loader...')
     train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
@@ -59,7 +86,8 @@ def main():
         val_loss, val_cer, val_wer, preds, labels = valid.validation(model,
                                                                      criterion,
                                                                      test_loader,
-                                                                     converter)
+                                                                     converter,
+                                                                     device)
 
     logger.info(
         f'Test. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} ')
