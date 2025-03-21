@@ -83,6 +83,52 @@ class Block(nn.Module):
         return x
 
 
+def get_2d_sincos_pos_embed(embed_dim, grid_size):
+    """
+    grid_size: int of the grid height and width
+    return:
+    pos_embed: [grid_size*grid_size, embed_dim] or [1+grid_size*grid_size, embed_dim] (w/ or w/o cls_token)
+    """
+    grid_h = np.arange(grid_size[0], dtype=np.float32)
+    grid_w = np.arange(grid_size[1], dtype=np.float32)
+    grid = np.meshgrid(grid_w, grid_h)  # here w goes first
+    grid = np.stack(grid, axis=0)
+
+    grid = grid.reshape([2, 1, grid_size[0], grid_size[1]])
+    pos_embed = get_2d_sincos_pos_embed_from_grid(embed_dim, grid)
+    return pos_embed
+
+
+def get_2d_sincos_pos_embed_from_grid(embed_dim, grid):
+    assert embed_dim % 2 == 0
+
+    # use half of dimensions to encode grid_h
+    emb_h = get_1d_sincos_pos_embed_from_grid(embed_dim // 2, grid[0])  # (H*W, D/2)
+    emb_w = get_1d_sincos_pos_embed_from_grid(embed_dim // 2, grid[1])  # (H*W, D/2)
+
+    emb = np.concatenate([emb_h, emb_w], axis=1)  # (H*W, D)
+    return emb
+
+
+def get_1d_sincos_pos_embed_from_grid(embed_dim, pos):
+    """
+    embed_dim: output dimension for each position
+    pos: a list of positions to be encoded: size (M,)
+    out: (M, D)
+    """
+    assert embed_dim % 2 == 0
+    omega = np.arange(embed_dim // 2, dtype=np.float64)
+    omega /= embed_dim / 2.
+    omega = 1. / 10000 ** omega  # (D/2,)
+
+    pos = pos.reshape(-1)  # (M,)
+    out = np.einsum('m,d->md', pos, omega)  # (M, D/2), outer product
+
+    emb_sin = np.sin(out)  # (M, D/2)
+    emb_cos = np.cos(out)  # (M, D/2)
+
+    emb = np.concatenate([emb_sin, emb_cos], axis=1)  # (M, D)
+    return emb
 
 
 
@@ -110,9 +156,11 @@ class MaskedAutoencoderViT(nn.Module):
         self.layer_norm = LayerNorm()
         self.patch_embed = ResNet18(embed_dim)
         self.embed_dim = embed_dim
-        self.num_patches =1
+        self.num_patches =128
+        self.grid_size = [1, 128]
         self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
-        self.pos_embed = None
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim),
+                                      requires_grad=False)
         self.blocks = nn.ModuleList([
             Block(embed_dim, num_heads, self.num_patches,
                   mlp_ratio, qkv_bias=True, norm_layer=norm_layer)
@@ -129,8 +177,8 @@ class MaskedAutoencoderViT(nn.Module):
     def initialize_weights(self):
         # initialization
         # initialize (and freeze) pos_embed by sin-cos embedding
-        # pos_embed = get_2d_sincos_pos_embed(self.embed_dim, self.grid_size)
-        # self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+        pos_embed = get_2d_sincos_pos_embed(self.embed_dim, self.grid_size)
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
    
         # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
         # w = self.patch_embed.proj.weight.data
@@ -184,8 +232,6 @@ class MaskedAutoencoderViT(nn.Module):
         # masking: length -> length * mask_ratio
         if use_masking:
             x = self.random_masking(x, mask_ratio, max_span_length)
-        self.num_patches = x.shape[1]
-        self.pos_embed = nn.Parameter(torch.randn(1, self.num_patches, self.embed_dim))
         x = x + self.pos_embed
         # apply Transformer blocks
         for blk in self.blocks:
