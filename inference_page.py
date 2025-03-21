@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 import torch
+import torch.nn as nn
 from PIL import Image
 import os
+import argparse
 
 from utils import utils
 from utils import option
-import torch
-import torch.nn as nn
+
 
 from model.HTR_VT import MaskedAutoencoderViT
 from collections import OrderedDict
@@ -177,7 +178,7 @@ def main():
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     torch.manual_seed(args.seed)
 
-    pred_list = make_predictions(image_path, pth_path, dict_path)
+    pred_list = make_predictions(args.image_path, args.pth_path, args.dict_path)
 
     print(pred_list)
 
