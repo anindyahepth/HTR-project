@@ -13,8 +13,8 @@ def format_IAM_line():
     """
     Format the IAM dataset at line level with the commonly used split (6,482 for train, 976 for validation and 2,915 for test)
     """
-    source_folder = "./iam"
-    target_folder = "./iam/lines"
+    source_folder = "/content/HTR-project/data/iam"
+    target_folder = "/content/HTR-project/data/iam/lines"
     tar_filename = "lines.tgz"
     line_folder_path = os.path.join(target_folder, "lines")
 
@@ -159,7 +159,7 @@ def pkl2txt(dataset_name):
             for k, v in a['ground_truth'][i].items():
                 head = k.split('.')[0]
                 text = v['text'].replace('¬', '')
-                with open(f'/content/HTR-project/data/read2016/lines/{head}.txt', 'a') as t: t.write(text)
+                with open(f'/content/HTR-project/data/{dataset_name}/lines/{head}.txt', 'a') as t: t.write(text)
 
 
 def move_files_and_delete_folders(parent_folder):
@@ -196,12 +196,12 @@ def move_files_and_delete_folders(parent_folder):
 
 if __name__ == "__main__":
 
-    format_READ2016_line()
-    pkl2txt('read2016')
-    move_files_and_delete_folders("/content/HTR-project/data/read2016/lines")
+    # format_READ2016_line()
+    # pkl2txt('read2016')
+    # move_files_and_delete_folders("/content/HTR-project/data/read2016/lines")
 
-    #format_IAM_line()
-    #pkl2txt('iam')
-    #move_files_and_delete_folders("./iam/lines")
+    format_IAM_line()
+    pkl2txt('iam')
+    move_files_and_delete_folders("./iam/lines")
 
     # format_LAM_line()
