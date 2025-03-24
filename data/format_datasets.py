@@ -202,6 +202,6 @@ if __name__ == "__main__":
 
     format_IAM_line()
     pkl2txt('iam')
-    move_files_and_delete_folders("./iam/lines")
+    move_files_and_delete_folders("/content/HTR-project/data/iam/lines")
 
     # format_LAM_line()
