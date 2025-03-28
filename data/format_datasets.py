@@ -196,12 +196,12 @@ def move_files_and_delete_folders(parent_folder):
 
 if __name__ == "__main__":
 
-    # format_READ2016_line()
-    # pkl2txt('read2016')
-    # move_files_and_delete_folders("/content/HTR-project/data/read2016/lines")
+    format_READ2016_line()
+    pkl2txt('read2016')
+    move_files_and_delete_folders("/content/HTR-project/data/read2016/lines")
 
-    format_IAM_line()
-    pkl2txt('iam')
-    move_files_and_delete_folders("/content/HTR-project/data/iam/lines")
+    # format_IAM_line()
+    # pkl2txt('iam')
+    # move_files_and_delete_folders("/content/HTR-project/data/iam/lines")
 
     # format_LAM_line()
