@@ -7,6 +7,7 @@ def get_args_parser():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--out-dir', type=str, default='/content/HTR-project/output', help='output directory')
+    parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
     parser.add_argument('--model-type', type=str, default='vitmae', help='choice of model')
     parser.add_argument('--train-bs', default=128, type=int, help='train batch size')
     parser.add_argument('--val-bs', default=8, type=int, help='validation batch size')
