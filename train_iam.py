@@ -4,6 +4,7 @@ import torch.utils.data
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
 from datasets import load_dataset
+from torchvision import transforms
 
 import os
 import json
@@ -17,6 +18,42 @@ from model.ViT_DW import ViT
 from functools import partial
 import argparse
 from collections import OrderedDict
+import ast
+from torch.utils.data import Dataset
+
+
+class HFImageDataset(Dataset):
+    
+    def __init__(self, dataset, transform=None):
+        """
+        Args:
+            dataset (datasets.Dataset): Hugging Face dataset.
+            transform (callable, optional): Optional transform to be applied on a sample.
+        """
+        self.dataset = dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):
+        """
+        Gets an image and its label from the dataset.
+
+        Args:
+            idx (int): Index of the image.
+
+        Returns:
+            tuple: (image, label)
+        """
+        example = self.dataset[idx]
+        image = example['image']  # Assuming 'image' column contains PIL Images
+        label = example['text']  # Assuming 'label' column
+
+        if self.transform:
+            image = self.transform(image)
+
+        return image, label
 
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
@@ -133,7 +170,15 @@ def main():
 
     logger.info('Loading train loader...')
     dataset_iam = load_dataset("Teklia/IAM-line")
-    train_dataset = dataset_iam["train"]
+
+    dataset_iam_train = dataset_iam["train"]
+    transform = transforms.Compose([ transforms.Resize((512, 64)),
+                                     transforms.ToTensor(),
+])
+    train_dataset = HFImageDataset(dataset_iam_train, transform=transform)
+
+
+
     #train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
     
     train_loader = torch.utils.data.DataLoader(train_dataset,
@@ -141,12 +186,12 @@ def main():
                                                shuffle=True,
                                                pin_memory=True,
                                                num_workers=args.num_workers,
-                                               collate_fn=partial(dataset.SameTrCollate, args=args),
                                                )
     train_iter = dataset.cycle_data(train_loader)
 
     logger.info('Loading val loader...')
-    val_dataset = dataset_iam["validation"]
+    dataset_iam_val = dataset_iam["validation"]
+    val_dataset = HFImageDataset(dataset_iam_val, transform=transform)
     #val_dataset = dataset.myLoadDS(args.val_data_list, args.data_path, args.img_size, ralph=train_dataset.ralph)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=args.val_bs,
