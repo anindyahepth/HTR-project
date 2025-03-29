@@ -133,7 +133,7 @@ def main():
 
     logger.info('Loading train loader...')
     dataset_iam = load_dataset("Teklia/IAM-line")
-    train_dataset = dataset["train"]
+    train_dataset = dataset_iam["train"]
     #train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
     
     train_loader = torch.utils.data.DataLoader(train_dataset,
@@ -146,7 +146,7 @@ def main():
     train_iter = dataset.cycle_data(train_loader)
 
     logger.info('Loading val loader...')
-    val_dataset = dataset["validation"]
+    val_dataset = dataset_iam["validation"]
     #val_dataset = dataset.myLoadDS(args.val_data_list, args.data_path, args.img_size, ralph=train_dataset.ralph)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=args.val_bs,
