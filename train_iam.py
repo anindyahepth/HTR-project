@@ -141,6 +141,7 @@ def main():
                                                shuffle=True,
                                                pin_memory=True,
                                                num_workers=args.num_workers,
+                                               collate_fn=partial(dataset.SameTrCollate, args=args),
                                                )
     train_iter = dataset.cycle_data(train_loader)
 
