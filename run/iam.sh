@@ -1,4 +1,4 @@
-python3 train.py --exp-name iam \
+python3 train_iam.py --exp-name iam \
 --max-lr 1e-3 \
 --train-bs 128 \
 --val-bs 8 \
