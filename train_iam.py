@@ -134,7 +134,7 @@ def main():
     model_type = args.model_type
 
     if model_type == 'vitmae':
-       model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
+       model = create_model_vitmae(nb_cls=95, img_size=args.img_size[::-1])
         
     elif model_type == 'vitdw':
        model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
