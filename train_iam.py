@@ -3,6 +3,7 @@ import torch.nn as nn
 import torch.utils.data
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
+from datasets import load_dataset
 
 import os
 import json
@@ -66,6 +67,19 @@ def compute_loss(args, model_type, model, image, batch_size, criterion, text, le
     torch.backends.cudnn.enabled = True
     return loss
 
+def dict_from_file_to_list(filepath):
+    try:
+        with open(filepath, 'r') as file:
+            dict_str = file.read()
+            dictionary = ast.literal_eval(dict_str)
+            return dictionary
+
+    except FileNotFoundError:
+        print(f"File '{filepath}' not found.")
+        return None
+    except ValueError as e:
+        print(f"Error parsing the file: {e}")
+        return None
 
 
 def main():
@@ -88,19 +102,19 @@ def main():
     elif model_type == 'vitdw':
        model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
 
-    ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
+    # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
 
-    model_dict = OrderedDict()
-    if 'model' in ckpt:
-        ckpt = ckpt['model']
+    # model_dict = OrderedDict()
+    # if 'model' in ckpt:
+    #     ckpt = ckpt['model']
 
-    unexpected_keys = ['state_dict_ema', 'optimizer']
-    for key in unexpected_keys:
-        if key in ckpt:
-            del ckpt[key]
+    # unexpected_keys = ['state_dict_ema', 'optimizer']
+    # for key in unexpected_keys:
+    #     if key in ckpt:
+    #         del ckpt[key]
 
 
-    model.load_state_dict(ckpt, strict= False)
+    # model.load_state_dict(ckpt, strict= False)
     
     
     
@@ -118,17 +132,21 @@ def main():
     model.zero_grad()
 
     logger.info('Loading train loader...')
-    train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
+    dataset_iam = load_dataset("Teklia/IAM-line")
+    train_dataset = dataset["train"]
+    #train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
+    
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=args.train_bs,
                                                shuffle=True,
                                                pin_memory=True,
                                                num_workers=args.num_workers,
-                                               collate_fn=partial(dataset.SameTrCollate, args=args))
+                                               )
     train_iter = dataset.cycle_data(train_loader)
 
     logger.info('Loading val loader...')
-    val_dataset = dataset.myLoadDS(args.val_data_list, args.data_path, args.img_size, ralph=train_dataset.ralph)
+    val_dataset = dataset["validation"]
+    #val_dataset = dataset.myLoadDS(args.val_data_list, args.data_path, args.img_size, ralph=train_dataset.ralph)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=args.val_bs,
                                              shuffle=False,
@@ -137,7 +155,8 @@ def main():
 
     optimizer = sam.SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=args.weight_decay)
     criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
-    converter = utils.CTCLabelConverter(train_dataset.ralph.values())
+    alpha = dict_from_file_to_list(args.dict_path)
+    converter = utils.CTCLabelConverter(alpha)
 
     best_cer, best_wer = 1e+6, 1e+6
     train_loss = 0.0
