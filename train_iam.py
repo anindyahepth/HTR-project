@@ -173,7 +173,7 @@ def main():
 
     dataset_iam_train = dataset_iam["train"]
     transform = transforms.Compose([ transforms.Resize((512, 64)),
-                                     transforms.ToTensor(),
+                                     # transforms.ToTensor(),
 ])
     train_dataset = HFImageDataset(dataset_iam_train, transform=transform)
 
@@ -186,7 +186,7 @@ def main():
                                                shuffle=True,
                                                pin_memory=True,
                                                num_workers=args.num_workers,
-                                               )
+                                               collate_fn=partial(dataset.SameTrCollate, args=args))
     train_iter = dataset.cycle_data(train_loader)
 
     logger.info('Loading val loader...')
