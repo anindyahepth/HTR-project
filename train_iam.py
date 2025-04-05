@@ -20,7 +20,7 @@ import argparse
 from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
-from augmentation_iam import ErosionDilationElasticRandomTransform
+from augmentations_iam import ErosionDilationElasticRandomTransform
 
 class HFImageDataset(Dataset):
     
