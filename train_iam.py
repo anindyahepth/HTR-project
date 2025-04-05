@@ -20,7 +20,7 @@ import argparse
 from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
-
+from augmentation_iam import ErosionDilationElasticRandomTransform
 
 class HFImageDataset(Dataset):
     
@@ -174,12 +174,8 @@ def main():
     dataset_iam_train = dataset_iam["train"]
     transform = transforms.Compose([ transforms.Resize((64, 512)),
     #ErosionDilationColorJitterTransform(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
-    ErosionDilationElasticRandomTransform(
-        elastic_alpha=15, elastic_sigma=7,
-        random_angle=10, random_translate=(0.1, 0.1), random_scale=(0.95, 1.05),
-        brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2
-    ),
-                                     transforms.ToTensor(),
+    ErosionDilationElasticRandomTransform(),
+    transforms.ToTensor(),
     ])
     train_dataset = HFImageDataset(dataset_iam_train, transform=transform)
 
