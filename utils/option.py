@@ -84,7 +84,7 @@ def get_args_parser():
                      help='val data list')
     IAM.add_argument('--test-data-list', type=str, default='./data/iam/test.ln',
                      help='test data list')
-    IAM.add_argument('--nb-cls', default=80, type=int, help='nb of classes, IAM=79+1, READ2016=89+1')
+    IAM.add_argument('--nb-cls', default=96, type=int, help='nb of classes, IAM=95+1, READ2016=89+1')
 
     READ = subparsers.add_parser("READ",
                                  description='Dataset parser for training on READ',
