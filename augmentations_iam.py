@@ -36,11 +36,11 @@ class ErosionDilationElasticRandomTransform:
     Applies erosion, dilation, elastic distortion, random transformation, and color jitter augmentations.
     """
 
-    def __init__(self, erosion_kernel_size=(3, 3), erosion_iterations=1,
-                 dilation_kernel_size=(3, 3), dilation_iterations=1,
-                 elastic_alpha=10, elastic_sigma=5,
-                 random_angle=15, random_translate=(0.1, 0.1), random_scale=(0.9, 1.1),
-                 brightness=0, contrast=0, saturation=0, hue=0):
+    def __init__(self, erosion_kernel_size=(2, 2), erosion_iterations=1,
+                 dilation_kernel_size=(2, 2), dilation_iterations=1,
+                 elastic_alpha=0.8, elastic_sigma=5,
+                 random_angle=0, random_translate=(0.1, 0.1), random_scale=(0.9, 1.1),
+                 brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2):
         """
         Initializes the augmentations.
 
