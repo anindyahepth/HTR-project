@@ -172,21 +172,25 @@ def main():
     dataset_iam = load_dataset("Teklia/IAM-line")
 
     dataset_iam_train = dataset_iam["train"]
-    transform = transforms.Compose([ transforms.Resize((512, 64)),
-                                     # transforms.ToTensor(),
-])
+    transform = transforms.Compose([ transforms.Resize((64, 512)),
+    #ErosionDilationColorJitterTransform(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
+    ErosionDilationElasticRandomTransform(
+        elastic_alpha=15, elastic_sigma=7,
+        random_angle=10, random_translate=(0.1, 0.1), random_scale=(0.95, 1.05),
+        brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2
+    ),
+                                     transforms.ToTensor(),
+    ])
     train_dataset = HFImageDataset(dataset_iam_train, transform=transform)
 
 
-
-    #train_dataset = dataset.myLoadDS(args.train_data_list, args.data_path, args.img_size)
     
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=args.train_bs,
                                                shuffle=True,
                                                pin_memory=True,
                                                num_workers=args.num_workers,
-                                               collate_fn=partial(dataset.SameTrCollate, args=args))
+                                               )
     train_iter = dataset.cycle_data(train_loader)
 
     logger.info('Loading val loader...')
