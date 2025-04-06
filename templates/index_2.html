@@ -27,7 +27,6 @@
             -khtml-user-select: none;
             -moz-user-select: none;
             -ms-user-select: none;
-            user-select: none;
         }
         #prediction-window {
             margin-top: 20px;
@@ -69,8 +68,8 @@
             display: none;
             border: 1px solid #ccc;
             border-radius: 5px;
-            margin-left: auto;  /* Add these lines */
-            margin-right: auto; /* to center the image. */
+            margin-left: auto;
+            margin-right: auto;
         }
 
     </style>
@@ -97,7 +96,6 @@
         <div class="center-align">
             <label for="imageUpload" class="file-upload-button">Upload Document</label>
             <input type="file" id="imageUpload" accept="image/jpeg" />
-            <button id="selectImageButton" class="waves-effect waves-light btn" style="display:none;">Select Image</button>
             <img id="selectedImage" src="#" alt="Selected Document" />
         </div>
 
@@ -110,7 +108,6 @@
         let isDrawing = false;
         const imageUpload = document.getElementById('imageUpload');
         const selectedImage = document.getElementById('selectedImage');
-        const selectImageButton = document.getElementById('selectImageButton');
 
 
         function resizeCanvas() {
@@ -175,7 +172,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             document.getElementById('prediction-window').style.display = "none";
             selectedImage.style.display = "none";
-            selectImageButton.style.display = "none";
         });
 
         // Submit Button
@@ -211,7 +207,6 @@
             reader.onload = (event) => {
                 selectedImage.src = event.target.result;
                 selectedImage.style.display = "block";
-                selectImageButton.style.display = "block";
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             };
 
@@ -219,14 +214,7 @@
                 reader.readAsDataURL(file);
             } else {
                 selectedImage.style.display = "none";
-                selectImageButton.style.display = "none";
             }
-        });
-
-        selectImageButton.addEventListener('click', () => {
-            const predictionWindow = document.getElementById('prediction-window');
-            predictionWindow.textContent = "Prediction: None";
-            predictionWindow.style.display = "none";
         });
 
     </script>
