@@ -15,7 +15,7 @@ python3 train_iam.py --exp-name iam \
 --total-iter 100000 \
 IAM
 
-python3 test.py --exp-name iam \
+python3 test_iam.py --exp-name iam \
 --max-lr 1e-3 \
 --train-bs 128 \
 --val-bs 8 \
