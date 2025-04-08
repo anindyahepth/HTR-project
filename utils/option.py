@@ -6,16 +6,16 @@ def get_args_parser():
                                      add_help=True,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--out-dir', type=str, default='/content/HTR-project/output', help='output directory')
-    parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
-    parser.add_argument('--dict_path', type=str, default='/content/HTR-project/dict_alph')
+    parser.add_argument('--out-dir', type=str, default='./output', help='output directory')
+    #parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
+    parser.add_argument('--dict_path', type=str, default='./dict_alph')
     parser.add_argument('--model-type', type=str, default='vitmae', help='choice of model')
     parser.add_argument('--train-bs', default=128, type=int, help='train batch size')
     parser.add_argument('--val-bs', default=8, type=int, help='validation batch size')
     parser.add_argument('--num-workers', default=0, type=int, help='nb of workers')
     parser.add_argument('--eval-iter', default=100, type=int, help='nb of iterations to run evaluation')
     parser.add_argument('--total-iter', default=1000, type=int, help='nb of total iterations for training')
-    parser.add_argument('--warm-up-iter', default=100, type=int, help='nb of iterations for warm-up')
+    parser.add_argument('--warm-up-iter', default=1000, type=int, help='nb of iterations for warm-up')
     parser.add_argument('--print-iter', default=100, type=int, help='nb of total iterations to print information')
     parser.add_argument('--max-lr', default=1e-3, type=float, help='learning rate')
     parser.add_argument('--weight-decay', default=5e-1, type=float, help='weight decay')
@@ -76,14 +76,14 @@ def get_args_parser():
                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
                                 help="Dataset parser for training on IAM")
 
-    IAM.add_argument('--train-data-list', type=str, default='./data/iam/train.ln',
-                     help='train data list (gc file)(ln file)')
-    IAM.add_argument('--data-path', type=str, default='./data/iam/lines/',
-                     help='train data list')
-    IAM.add_argument('--val-data-list', type=str, default='./data/iam/val.ln',
-                     help='val data list')
-    IAM.add_argument('--test-data-list', type=str, default='./data/iam/test.ln',
-                     help='test data list')
+    # IAM.add_argument('--train-data-list', type=str, default='./data/iam/train.ln',
+    #                  help='train data list (gc file)(ln file)')
+    # IAM.add_argument('--data-path', type=str, default='./data/iam/lines/',
+    #                  help='train data list')
+    # IAM.add_argument('--val-data-list', type=str, default='./data/iam/val.ln',
+    #                  help='val data list')
+    # IAM.add_argument('--test-data-list', type=str, default='./data/iam/test.ln',
+    #                  help='test data list')
     IAM.add_argument('--nb-cls', default=96, type=int, help='nb of classes, IAM=95+1, READ2016=89+1')
 
     READ = subparsers.add_parser("READ",
