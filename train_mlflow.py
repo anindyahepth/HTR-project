@@ -139,22 +139,6 @@ def main():
     elif model_type == 'vitdw':
        model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
 
-    # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
-
-    # model_dict = OrderedDict()
-    # if 'model' in ckpt:
-    #     ckpt = ckpt['model']
-
-    # unexpected_keys = ['state_dict_ema', 'optimizer']
-    # for key in unexpected_keys:
-    #     if key in ckpt:
-    #         del ckpt[key]
-
-
-    # model.load_state_dict(ckpt, strict= False)
-    
-    
-    
 
     total_param = sum(p.numel() for p in model.parameters())
     logger.info('total_param is {}'.format(total_param))
