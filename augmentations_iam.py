@@ -59,9 +59,11 @@ class ErosionDilationElasticRandomTransform:
             saturation (float): Saturation jitter factor.
             hue (float): Hue jitter factor.
         """
-        self.erosion_kernel = np.ones(erosion_kernel_size, np.uint8)
+        kernel_h = utils.randint(1, args.dila_ero_max_kernel + 1)
+        kernel_w = utils.randint(1, args.dila_ero_max_kernel + 1)             
+        self.erosion_kernel = (kernel_h, kernel_w)    #np.ones(erosion_kernel_size, np.uint8)
         self.erosion_iterations = erosion_iterations
-        self.dilation_kernel = np.ones(dilation_kernel_size, np.uint8)
+        self.dilation_kernel = (kernel_h, kernel_w)   #np.ones(dilation_kernel_size, np.uint8)
         self.dilation_iterations = dilation_iterations
         self.elastic_alpha = elastic_alpha
         self.elastic_sigma = elastic_sigma
@@ -102,16 +104,16 @@ class ErosionDilationElasticRandomTransform:
 
         img_np = np.array(img_pil)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             img_np = cv2.erode(img_np, self.erosion_kernel, iterations=self.erosion_iterations)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             img_np = cv2.dilate(img_np, self.dilation_kernel, iterations=self.dilation_iterations)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             img_np = self._elastic_transform(img_np, self.elastic_alpha, self.elastic_sigma)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             angle = random.uniform(-self.random_angle, self.random_angle)
             translate = (random.uniform(-self.random_translate[0], self.random_translate[0]),
                          random.uniform(-self.random_translate[1], self.random_translate[1]))
@@ -179,10 +181,10 @@ class ErosionDilationColorJitterTransform:
 
         img_np = np.array(img_pil)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             img_np = cv2.erode(img_np, self.erosion_kernel, iterations=self.erosion_iterations)
 
-        if random.random() < 0.5:
+        if random.random() < 0.7:
             img_np = cv2.dilate(img_np, self.dilation_kernel, iterations=self.dilation_iterations)
 
         img_pil = Image.fromarray(img_np)
