@@ -9,6 +9,22 @@ from einops.layers.torch import Rearrange
 def pair(t):
     return t if isinstance(t, tuple) else (t, t)
 
+def get_2d_sincos_pos_embed(embed_dim, grid_size):
+    """
+    grid_size: int of the grid height and width
+    return:
+    pos_embed: [grid_size*grid_size, embed_dim] or [1+grid_size*grid_size, embed_dim] (w/ or w/o cls_token)
+    """
+    grid_h = np.arange(grid_size[0], dtype=np.float32)
+    grid_w = np.arange(grid_size[1], dtype=np.float32)
+    grid = np.meshgrid(grid_w, grid_h)  # here w goes first
+    grid = np.stack(grid, axis=0)
+
+    grid = grid.reshape([2, 1, grid_size[0], grid_size[1]])
+    pos_embed = get_2d_sincos_pos_embed_from_grid(embed_dim, grid)
+    return pos_embed
+
+
 # classes
 
 class FeedForward(nn.Module):
@@ -80,6 +96,7 @@ class Transformer(nn.Module):
 
         return self.norm(x)
 
+
 class ViT(nn.Module):
     def __init__(self, *, image_size, patch_size, num_classes, dim, depth, heads, mlp_dim, channels = 1, dim_head = 64, dropout = 0., emb_dropout = 0.):
         super().__init__()
@@ -88,8 +105,10 @@ class ViT(nn.Module):
 
         assert image_height % patch_height == 0 and image_width % patch_width == 0, 'Image dimensions must be divisible by the patch size.'
 
-        num_patches = (image_height // patch_height) * (image_width // patch_width)
+        self.num_patches = (image_height // patch_height) * (image_width // patch_width)
         patch_dim = channels * patch_height * patch_width
+        self.grid_size = [(image_height // patch_height), (image_width // patch_width)]
+        self.embed_dim = dim
         #assert pool in {'cls', 'mean'}, 'pool type must be either cls (cls token) or mean (mean pooling)'
 
         self.to_patch_embedding = nn.Sequential(
@@ -99,8 +118,10 @@ class ViT(nn.Module):
             nn.LayerNorm(dim),
         )
 
-        self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, dim))
+        #self.pos_embedding = nn.Parameter(torch.randn(1, num_patches, dim))
         #self.cls_token = nn.Parameter(torch.randn(1, 1, dim))
+        self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, dim),
+                                      requires_grad=False)
         self.dropout = nn.Dropout(emb_dropout)
 
         self.transformer = Transformer(dim, depth, heads, dim_head, mlp_dim, dropout)
@@ -110,13 +131,36 @@ class ViT(nn.Module):
 
         self.mlp_head = nn.Linear(dim, num_classes)
 
+        self.initialize_weights()
+
+
+    def initialize_weights(self):
+        # initialization
+        # initialize (and freeze) pos_embed by sin-cos embedding
+        pos_embed = get_2d_sincos_pos_embed(self.embed_dim, self.grid_size)
+        self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+   
+        # initialize nn.Linear and nn.LayerNorm
+        self.apply(self._init_weights)
+
+    
+    def _init_weights(self, m):
+        if isinstance(m, nn.Linear):
+            # we use xavier_uniform following official JAX ViT:
+            torch.nn.init.xavier_uniform_(m.weight)
+            if isinstance(m, nn.Linear) and m.bias is not None:
+                nn.init.constant_(m.bias, 0)
+            elif isinstance(m, nn.LayerNorm):
+                nn.init.constant_(m.bias, 0)
+                nn.init.constant_(m.weight, 1.0)
+
     def forward(self, img):
         x = self.to_patch_embedding(img)
-        b, n, _ = x.shape
+        #b, n, _ = x.shape
 
         #cls_tokens = repeat(self.cls_token, '1 1 d -> b 1 d', b = b)
         #x = torch.cat((cls_tokens, x), dim=1)
-        x += self.pos_embedding[:, :n]
+        x = x + self.pos_embed
         x = self.dropout(x)
 
         x = self.transformer(x)
