@@ -21,6 +21,9 @@ from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
 from augmentations_iam import ErosionDilationElasticRandomTransform
+import mlflow
+
+mlflow.set_tracking_uri(os.getenv("MLFLOW_TRACKING_URI"))
 
 class HFImageDataset(Dataset):
     
@@ -121,6 +124,10 @@ def dict_from_file_to_list(filepath):
 
 def main():
 
+  mlflow.pytorch.autolog()
+
+  with mlflow.start_run(experiment_id=):
+
     args = option.get_args_parser()
     torch.manual_seed(args.seed)
 
@@ -190,6 +197,8 @@ def main():
 
     best_cer, best_wer = 1e+6, 1e+6
     train_loss = 0.0
+    val_cer_list, val_wer_list = [], []
+    n_val = int(args.total_iter/args.eval_iter)
 
     #### ---- train & eval ---- ####
 
@@ -229,6 +238,8 @@ def main():
                                                                              val_loader,
                                                                              converter,
                                                                              device)
+                val_cer_list.append(val_cer)
+                val_wer_list.append(val_wer)
 
                 if val_cer < best_cer:
                     logger.info(f'CER improved from {best_cer:.4f} to {val_cer:.4f}!!!')
@@ -259,6 +270,13 @@ def main():
                 writer.add_scalar('./VAL/bestWER', best_wer, nb_iter)
                 writer.add_scalar('./VAL/val_loss', val_loss, nb_iter)
                 model.train()
+
+  for i in range(n_val):
+        	mlflow.log_metrics(
+            { "validation_cer": val_cer_list[i],
+              "val_wer": val_wer_list[i],
+            },step = i+1
+        )
 
 
 if __name__ == '__main__':
