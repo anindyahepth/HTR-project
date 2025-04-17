@@ -86,6 +86,20 @@ def create_model_vitdw(image_size, num_classes):
                     )
      return model 
 
+def create_model_vit(image_size, num_classes):
+     model =  ViT(image_size = image_size,
+                    patch_size= (64, 4),
+                    num_classes = num_classes,
+                    dim= 768,
+                    depth= 4,
+                    heads= 6,
+                    mlp_dim= 3072 ,
+                    dim_head= 128,
+                    dropout= 0.0,
+                    emb_dropout= 0.0,
+                    )
+     return model 
+
 
 def compute_loss(args, model_type, model, image, batch_size, criterion, text, length):
 
@@ -94,7 +108,7 @@ def compute_loss(args, model_type, model, image, batch_size, criterion, text, le
     if model_type == 'vitmae':
        preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
         
-    elif model_type == 'vitdw':
+    elif model_type == 'vit':
        preds = model(image)
     
     preds = preds.float()
@@ -143,8 +157,8 @@ def main():
     if model_type == 'vitmae':
        model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
         
-    elif model_type == 'vitdw':
-       model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
+    elif model_type == 'vit':
+       model = create_model_vit(image_size= (64, 512), num_classes=args.nb_cls)
 
 
     total_param = sum(p.numel() for p in model.parameters())
