@@ -287,7 +287,7 @@ def main():
 
     for i in range(len(val_cer_list)):
         	mlflow.log_metrics(
-            { "validation_cer": val_cer_list[i],
+            { "val_cer": val_cer_list[i],
               "val_wer": val_wer_list[i],
             },step = i+1
         )
