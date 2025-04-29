@@ -1,6 +1,6 @@
 # HTR-project
 
-
+This project explores different transformer-based models for the task of Handwritten Text Recognition (HTR) at the line level. 
 
 
 
