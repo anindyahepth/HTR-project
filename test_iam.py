@@ -9,7 +9,6 @@ import ast
 
 from utils import utils
 from utils import option
-from data import dataset
 from model.ViT_Resnet import MaskedAutoencoderViT
 from collections import OrderedDict
 from functools import partial
