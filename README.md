@@ -1,6 +1,6 @@
 # HTR-project
 
-This project explores different transformer-based models for the task of Handwritten Text Recognition (HTR) at the line level. 
+This project explores different transformer-based models for the task of Handwritten Text Recognition (HTR) at the line level. In particular, we consider different versions of the following basic model - a ViT coupled with a ResNet feature extractor and a CTC loss function. 
 
 
 
