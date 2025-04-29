@@ -14,7 +14,7 @@ from torchvision import transforms
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import utils
 #from data import dataset
-from model.HTR_VT import MaskedAutoencoderViT
+from model.ViT_Resnet import MaskedAutoencoderViT
 from model.ViTBNFFN_CNN import ViT
 from functools import partial
 
