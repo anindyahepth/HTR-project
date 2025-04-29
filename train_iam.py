@@ -12,7 +12,6 @@ import valid
 from utils import utils
 from utils import sam
 from utils import option
-from data import dataset
 from model.ViT_Resnet import MaskedAutoencoderViT
 from model.ViT_DW import ViT
 from functools import partial
@@ -54,6 +53,11 @@ class HFImageDataset(Dataset):
             image = self.transform(image)
 
         return image, label
+
+def cycle_data(iterable):
+    while True:
+        for x in iterable:
+            yield x
 
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
@@ -187,7 +191,7 @@ def main():
                                                pin_memory=True,
                                                num_workers=args.num_workers,
                                                )
-    train_iter = dataset.cycle_data(train_loader)
+    train_iter = cycle_data(train_loader)
 
     logger.info('Loading val loader...')
     dataset_iam_val = dataset_iam["validation"]
