@@ -10,7 +10,7 @@ import ast
 from utils import utils
 from utils import option
 from data import dataset
-from model.HTR_VT import MaskedAutoencoderViT
+from model.ViT_Resnet import MaskedAutoencoderViT
 from collections import OrderedDict
 from functools import partial
 from datasets import load_dataset
