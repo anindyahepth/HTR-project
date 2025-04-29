@@ -13,7 +13,7 @@ from utils import utils
 from utils import sam
 from utils import option
 from data import dataset
-from model.HTR_VT import MaskedAutoencoderViT
+from model.ViT_Resnet import MaskedAutoencoderViT
 from model.ViT_DW import ViT
 from functools import partial
 import argparse
