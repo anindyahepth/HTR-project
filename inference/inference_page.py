@@ -10,7 +10,7 @@ from utils import utils
 from utils import option
 
 
-from model.HTR_VT import MaskedAutoencoderViT
+from model.ViT_Resnet import MaskedAutoencoderViT
 from collections import OrderedDict
 from functools import partial
 
