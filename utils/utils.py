@@ -107,6 +107,7 @@ class CTCLabelConverter(object):
                 if t[i] != 0 and (not (i > 0 and t[i - 1] == t[i])) and t[i]<len(self.character):
                     char_list.append(self.character[t[i]])
             text = ''.join(char_list)
+            print(text)
 
             texts.append(text)
             index += l
