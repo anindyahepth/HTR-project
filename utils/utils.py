@@ -8,10 +8,28 @@ import re
 import sys
 import math
 import logging
+import ast
 from copy import deepcopy
 from collections import OrderedDict
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
+
+#Function to load the dictionary (text-to-class map) from a text file
+
+def dict_from_file_to_list(filepath):
+    try:
+        with open(filepath, 'r') as file:
+            dict_str = file.read()
+            dictionary = ast.literal_eval(dict_str)
+            return dictionary
+
+    except FileNotFoundError:
+        print(f"File '{filepath}' not found.")
+        return None
+    except ValueError as e:
+        print(f"Error parsing the file: {e}")
+        return None
 
 
 def randint(low, high):
