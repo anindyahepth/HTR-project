@@ -196,7 +196,6 @@ def main():
     logger.info('Loading val loader...')
     dataset_iam_val = dataset_iam["validation"]
     val_dataset = HFImageDataset(dataset_iam_val, transform=transform)
-    #val_dataset = dataset.myLoadDS(args.val_data_list, args.data_path, args.img_size, ralph=train_dataset.ralph)
     val_loader = torch.utils.data.DataLoader(val_dataset,
                                              batch_size=args.val_bs,
                                              shuffle=False,
