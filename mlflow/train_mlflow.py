@@ -264,6 +264,8 @@ def main():
                         'optimizer': optimizer.state_dict(),
                     }
                     torch.save(checkpoint, os.path.join(args.save_dir, 'best_CER.pth'))
+                    checkpoint_path = os.path.join(args.save_dir, 'best_CER.pth')
+                    mlflow.log_artifact(checkpoint_path, artifact_path="checkpoints_cer")
 
                 if val_wer < best_wer:
                     logger.info(f'WER improved from {best_wer:.4f} to {val_wer:.4f}!!!')
@@ -274,6 +276,8 @@ def main():
                         'optimizer': optimizer.state_dict(),
                     }
                     torch.save(checkpoint, os.path.join(args.save_dir, 'best_WER.pth'))
+                    checkpoint_path = os.path.join(args.save_dir, 'best_WER.pth')
+                    mlflow.log_artifact(checkpoint_path, artifact_path="checkpoints_wer")
 
                 logger.info(
                     f'Val. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} \t ')
@@ -289,8 +293,16 @@ def main():
         	mlflow.log_metrics(
             { "val_cer": val_cer_list[i],
               "val_wer": val_wer_list[i],
+              "val_loss": val_loss_list[i]
             },step = i+1
         )
+
+    for j in range(len(train_loss_list)):
+        mlflow.log_metrics(
+          { "train_loss": train_loss_list[j]
+          },step = j+1
+        )
+    
 
 mlflow.end_run()
 
