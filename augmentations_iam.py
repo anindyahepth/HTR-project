@@ -3,7 +3,6 @@ import torch.nn as nn
 import torch.utils.data
 import torch.backends.cudnn as cudnn
 from torch.utils.tensorboard import SummaryWriter
-from datasets import load_dataset
 from torchvision import transforms
 
 import os
@@ -12,9 +11,6 @@ import valid
 from utils import utils
 from utils import sam
 from utils import option
-from data import dataset
-from model.HTR_VT import MaskedAutoencoderViT
-from model.ViT_DW import ViT
 from functools import partial
 import argparse
 from collections import OrderedDict
@@ -59,8 +55,8 @@ class ErosionDilationElasticRandomTransform:
             saturation (float): Saturation jitter factor.
             hue (float): Hue jitter factor.
         """
-        kernel_h = utils.randint(1, args.dila_ero_max_kernel + 1)
-        kernel_w = utils.randint(1, args.dila_ero_max_kernel + 1)             
+        kernel_h = utils.randint(1, 3)
+        kernel_w = utils.randint(1, 3)             
         self.erosion_kernel = (kernel_h, kernel_w)    #np.ones(erosion_kernel_size, np.uint8)
         self.erosion_iterations = erosion_iterations
         self.dilation_kernel = (kernel_h, kernel_w)   #np.ones(dilation_kernel_size, np.uint8)
