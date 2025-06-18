@@ -7,8 +7,10 @@ from einops.layers.torch import Rearrange
 #------ResNet18----------
 
 class ResNet18_feat_ex(nn.Module):
-    def __init__(self, embed_dim=512, pretrained = True):
+    def __init__(self, embed_dim=256, pretrained = True):
         super().__init__()
+        self.embed_dim = embed_dim
+        self.pretrained = pretrained
         if pretrained:
           self.backbone = timm.create_model('resnet18.a1_in1k', pretrained=True, features_only=True)
           for param in self.backbone.parameters():
