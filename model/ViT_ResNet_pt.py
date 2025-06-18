@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.vision_transformer import Mlp, DropPath
-from model.resnet18 import ResNet18_feat_ex
+from model.resnet import ResNet18_feat_ex
 
 import numpy as np
 from functools import partial
@@ -144,7 +144,7 @@ class MaskedAutoencoderViT(nn.Module):
     def __init__(self,
                  nb_cls=80,
                  img_size=[512, 32] ,
-                 embed_dim=768,
+                 embed_dim=256,
                  depth=24,
                  num_heads=16,
                  mlp_ratio=4.,
@@ -159,7 +159,7 @@ class MaskedAutoencoderViT(nn.Module):
         self.patch_embed = ResNet18_feat_ex(embed_dim, pretrained = pre_trained)
         self.embed_dim = embed_dim
         self.num_patches =128
-        self.grid_size = [4, 32]
+        self.grid_size = [1, 128]
         self.mask_token = nn.Parameter(torch.zeros(1, 1, embed_dim))
         self.pos_embed = nn.Parameter(torch.zeros(1, self.num_patches, embed_dim),
                                       requires_grad=False)
