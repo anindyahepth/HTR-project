@@ -3,15 +3,15 @@ import torch.nn as nn
 import timm
 
 
-class ResNet18_feat_ex(nn.Module):
+class ResNet50_feat_ex(nn.Module):
     def __init__(self, embed_dim=512, pretrained = True):
         super().__init__()
         if pretrained:
-          self.backbone = timm.create_model('resnet18.a1_in1k', pretrained=True, features_only=True)
+          self.backbone = timm.create_model('resnet50.a1_in1k', pretrained=True, features_only=True)
           for param in self.backbone.parameters():
             param.requires_grad = False
         else:
-          self.backbone = timm.create_model('resnet18.a1_in1k', pretrained=False, features_only=True)
+          self.backbone = timm.create_model('resnet50.a1_in1k', pretrained=False, features_only=True)
 
         #Changing feature_dim to desired value
         # self.feature_modifier_conv = nn.Sequential(
@@ -24,7 +24,7 @@ class ResNet18_feat_ex(nn.Module):
 
     def forward(self, x):
         feature_maps = self.backbone(x)
-        features_from_layer_3 = feature_maps[3] # Shape: (Batch, 256, H, W)
+        features_from_layer_3 = feature_maps[3] # Shape: (Batch, 1024, H, W)
         #modified_features = self.feature_modifier_conv(features_from_layer3) # Shape: (Batch, new_feature_dim, H, W)
 
         
