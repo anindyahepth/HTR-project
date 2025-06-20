@@ -2,7 +2,7 @@ import argparse
 
 
 def get_args_parser():
-    parser = argparse.ArgumentParser(description='Origami for HTR',
+    parser = argparse.ArgumentParser(description='HTR with ResNet',
                                      add_help=True,
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
