@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.utils.data
 import torch.backends.cudnn as cudnn
-from torch.utils.tensorboard import SummaryWriter
 from datasets import load_dataset
 from torchvision import transforms
 
@@ -13,51 +12,23 @@ from utils import utils
 from utils import sam
 from utils import option
 from model.ViT_Resnet import MaskedAutoencoderViT
-from model.ViT_DW import ViT
 from functools import partial
 import argparse
 from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
-from augmentations_iam import ErosionDilationElasticRandomTransform
+from dataset_preprocess import augmentation_pipeline, IAMDataset
 
-class HFImageDataset(Dataset):
+
+def create_datasets_HF(data_path = "Teklia/IAM-line"):
+  dataset = load_dataset(data_path)
+
+  dataset_train = dataset["train"]
+  dataset_val = dataset["validation"]
+  dataset_test = dataset["test"]
+
+  return dataset_train, dataset_val, dataset_test
     
-    def __init__(self, dataset, transform=None):
-        """
-        Args:
-            dataset (datasets.Dataset): Hugging Face dataset.
-            transform (callable, optional): Optional transform to be applied on a sample.
-        """
-        self.dataset = dataset
-        self.transform = transform
-
-    def __len__(self):
-        return len(self.dataset)
-
-    def __getitem__(self, idx):
-        """
-        Gets an image and its label from the dataset.
-
-        Args:
-            idx (int): Index of the image.
-
-        Returns:
-            tuple: (image, label)
-        """
-        example = self.dataset[idx]
-        image = example['image']  # Assuming 'image' column contains PIL Images
-        label = example['text']  # Assuming 'label' column
-
-        if self.transform:
-            image = self.transform(image)
-
-        return image, label
-
-def cycle_data(iterable):
-    while True:
-        for x in iterable:
-            yield x
 
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
@@ -66,26 +37,11 @@ def create_model_vitmae(nb_cls, img_size, **kwargs):
                                  depth=4,
                                  num_heads=6,
                                  mlp_ratio=4,
+                                 pre_trained=True,
                                  norm_layer=partial(nn.LayerNorm, eps=1e-6),
                                  **kwargs)
-    
+
     return model
-
-
-
-def create_model_vitdw(image_size, num_classes):
-     model =  ViT(image_size = image_size,
-                    patch_size= (64, 32),
-                    num_classes = num_classes,
-                    dim= 768,
-                    depth= 4,
-                    heads= 6,
-                    mlp_dim= 128 ,
-                    dim_head= 64,
-                    dropout= 0.0,
-                    emb_dropout= 0.0,
-                    )
-     return model 
 
 
 def compute_loss(args, model_type, model, image, batch_size, criterion, text, length):
