@@ -72,7 +72,7 @@ def main():
     model = create_model_vitmae(nb_cls=96, img_size=[64, 1024])
     model.to(device)
     
-    dataset_iam_train, dataset_iam_val, dataset_iam_test = utils.create_datasets_HF()
+    dataset_iam_train, dataset_iam_val, dataset_iam_test = create_datasets_HF()
     alpha = utils.dict_from_file_to_list(args.dict_path)
     converter = utils.CTCLabelConverter(alpha)
 
@@ -127,16 +127,16 @@ def main():
 
       for i, batch in enumerate(train_loader):
         global_step = i + 1 + epoch * len(train_loader)
-        optimizer, current_lr = update_lr_cos(global_step, warm_up_iter=1000, total_iter=n_epochs * len(train_loader), max_lr=1e-3, optimizer=optimizer, min_lr=1e-7)
+        optimizer, current_lr = utils.update_lr_cos(global_step, warm_up_iter=1000, total_iter=n_epochs * len(train_loader), max_lr=1e-3, optimizer=optimizer, min_lr=1e-7)
 
         model.train()
         pixel_values = batch['pixel_values'].to(device)
         labels = batch['labels'].to(device)
         input_dict = {'pixel_values': pixel_values, 'labels': labels}
-        loss = compute_loss(model, input_dict, batch_size, criterion, device)
+        loss = utils.compute_loss(model, input_dict, batch_size, criterion, device)
         loss.backward()
         optimizer.first_step(zero_grad=True)
-        loss = compute_loss(model, input_dict, batch_size, criterion, device)
+        loss = utils.compute_loss(model, input_dict, batch_size, criterion, device)
         loss.backward()
         optimizer.second_step(zero_grad=True)
         optimizer.zero_grad()
@@ -157,8 +157,8 @@ def main():
           val_cer = 0.0
           val_wer = 0.0
           with torch.no_grad():
-            val_cer, val_wer = calc_metric_loader(val_loader, model, device, converter)
-            loss_val = compute_loss_loader(model, val_loader, criterion, device)
+            val_cer, val_wer = utils.calc_metric_loader(val_loader, model, device, converter)
+            loss_val = utils.compute_loss_loader(model, val_loader, criterion, device)
             val_cer_list.append(val_cer)
             val_wer_list.append(val_wer)
             val_loss_list.append(loss_val)
