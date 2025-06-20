@@ -32,6 +32,7 @@ def get_args_parser():
     parser.add_argument('--max-span-length', default=4, type=int, help='max mask length')
     parser.add_argument('--spacing', default=0, type=int, help='the spacing between two span masks')
     parser.add_argument('--proj', default=8, type=float, help='projection value')
+    parser.add_argument('--nb-cls', default=96, type=int, help='nb of classes, IAM=95+1')
 
     parser.add_argument('--dpi-min-factor', default=0.5,type=float)
     parser.add_argument('--dpi-max-factor', default=1.5, type=float)
@@ -64,58 +65,6 @@ def get_args_parser():
     parser.add_argument('--zoom-min-w', default=0.99, type=float)
     parser.add_argument('--zoom-max-w', default=1, type=float)
     parser.add_argument('--proba', default=0.5, type=float)
-
-    parser.add_argument('--ema-decay', default=0.9999, type=float, help='Exponential Moving Average (EMA) decay')
-    parser.add_argument('--alpha', default=1, type=float, help='kld loss ratio')
-
-    subparsers = parser.add_subparsers(title="dataset setting", dest="subcommand")
-
-    IAM = subparsers.add_parser("IAM",
-                                description='Dataset parser for training on IAM',
-                                add_help=True,
-                                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                help="Dataset parser for training on IAM")
-
-    # IAM.add_argument('--train-data-list', type=str, default='./data/iam/train.ln',
-    #                  help='train data list (gc file)(ln file)')
-    # IAM.add_argument('--data-path', type=str, default='./data/iam/lines/',
-    #                  help='train data list')
-    # IAM.add_argument('--val-data-list', type=str, default='./data/iam/val.ln',
-    #                  help='val data list')
-    # IAM.add_argument('--test-data-list', type=str, default='./data/iam/test.ln',
-    #                  help='test data list')
-    IAM.add_argument('--nb-cls', default=96, type=int, help='nb of classes, IAM=95+1, READ2016=89+1')
-
-    READ = subparsers.add_parser("READ",
-                                 description='Dataset parser for training on READ',
-                                 add_help=True,
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                 help="Dataset parser for training on READ")
-
-    READ.add_argument('--train-data-list', type=str, default='./data/read2016/train.ln',
-                      help='train data list (gc file)(ln file)')
-    READ.add_argument('--data-path', type=str, default='./data/read2016/lines/',
-                      help='train data list')
-    READ.add_argument('--val-data-list', type=str, default='./data/read2016/val.ln',
-                      help='val data list')
-    READ.add_argument('--test-data-list', type=str, default='./data/read2016/test.ln',
-                      help='test data list')
-    READ.add_argument('--nb-cls', default=90, type=int, help='nb of classes, IAM=79+1, READ2016=89+1')
-
-    LAM = subparsers.add_parser("LAM",
-                                description='Dataset parser for training on LAM',
-                                add_help=True,
-                                formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-                                help="Dataset parser for training on READ")
-
-    LAM.add_argument('--train-data-list', type=str, default='./data/LAM/train.ln',
-                     help='train data list (gc file)(ln file)')
-    LAM.add_argument('--data-path', type=str, default='./data/LAM/lines/',
-                     help='train data list')
-    LAM.add_argument('--val-data-list', type=str, default='./data/LAM/val.ln',
-                     help='val data list')
-    LAM.add_argument('--test-data-list', type=str, default='./data/LAM/test.ln',
-                     help='test data list')
-    LAM.add_argument('--nb-cls', default=90, type=int, help='nb of classes, IAM=79+1, READ2016=89+1')
+    
 
     return parser.parse_args()
