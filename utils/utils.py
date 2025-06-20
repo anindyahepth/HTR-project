@@ -165,7 +165,7 @@ def calc_metric_loader(data_loader, model, device, converter):
 
     return sum_cer / num_iters, sum_wer / num_iters
 
-
+#-------CTC Loss Function --------------
 def compute_loss(model, input_dict, batch_size, criterion, device):
 
     pixel_values = input_dict['pixel_values'].to(device)
