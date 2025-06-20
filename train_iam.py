@@ -11,7 +11,7 @@ import valid
 from utils import utils
 from utils.sam import SAM
 from utils import option
-from model.ViT_Resnet import MaskedAutoencoderViT
+from model.ViT_ResNet import MaskedAutoencoderViT
 from functools import partial
 import argparse
 from collections import OrderedDict
@@ -20,6 +20,8 @@ from torch.utils.data import Dataset
 from dataset_preprocess import IAMDataset
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
+
+import mlflow
 
 
 def create_datasets_HF(data_path = "Teklia/IAM-line"):
