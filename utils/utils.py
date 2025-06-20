@@ -5,6 +5,7 @@ from torch.distributions.uniform import Uniform
 
 import os
 import re
+import editdistance
 import sys
 import math
 import logging
@@ -96,3 +97,121 @@ class CTCLabelConverter(object):
             texts.append(text)
             index += l
         return texts
+
+
+
+#------Evaluation metrics--------
+
+def clean_text(text):
+  text = re.sub(r'[^\w\s\']', '', text)  # Remove punctuation except apostrophes
+  text = re.sub(r'\s+', ' ', text)  # Remove extra spaces
+  
+  return text.strip()
+
+def format_string_for_wer(str):
+    str = re.sub('([\[\]{}/\\()\"\'&+*=<>?.;:,!\-—_€#%°])', r' \1 ', str)
+    str = re.sub('([ \n])+', " ", str).strip()
+    return str
+
+
+
+def compute_metric(pred_ids, target_ids, converter):
+    # length_pred = [pred_ids.shape[1] for j in range(pred_ids.shape[0])]
+    # length_target = [target_ids.shape[1] for j in range(target_ids.shape[0])]
+    pred_str= converter.decode(pred_ids, length = pred_ids.shape)
+    target_str = converter.decode(target_ids, length = target_ids.shape)
+    pred_str = ''.join(pred_str)
+    target_str = ''.join(target_str)
+
+    edit_distance = editdistance.eval(target_str, pred_str)
+    target_length = len(target_str)
+    if target_length == 0:
+        return 0.0 if len(pred_str) == 0 else float('inf')
+    cer = float(edit_distance) / target_length
+
+    # pred_words = clean_text(pred_str).split()
+    # target_words = clean_text(target_str).split()
+    pred_words = format_string_for_wer(pred_str).split()
+    target_words = format_string_for_wer(target_str).split()
+
+    wer_distance = editdistance.eval(target_words, pred_words)
+    wer = float(wer_distance) / len(target_words) if target_words else 0.0
+
+    return {"cer": cer, "wer": wer, "pred_str": pred_str, "target_str": target_str, "pred_words":pred_words}
+
+
+def calc_metric_loader(data_loader, model, device, converter):
+    model.eval()
+    cer =[]
+    wer =[]
+
+    for i, batch in enumerate(data_loader):
+        image = batch['pixel_values'].to(device)
+        model.to(device)
+        output = model(image, 0.0, 1 , use_masking=False)
+        pred_ids = torch.argmax(output, dim=-1)
+
+        for j in range(output.shape[0]):
+            output_ids = pred_ids[j]
+            input_ids = batch['labels'][j]
+            metric = compute_metric(output_ids, input_ids, converter)
+            cer.append(metric['cer'])
+            wer.append(metric['wer'])
+
+    num_iters = len(cer)
+    print(num_iters)
+    sum_cer = sum(cer)
+    sum_wer = sum(wer)
+
+    return sum_cer / num_iters, sum_wer / num_iters
+
+
+def compute_loss(model, input_dict, batch_size, criterion, device):
+
+    pixel_values = input_dict['pixel_values'].to(device)
+    labels = input_dict['labels'].to(device)
+
+    # For CTC, we need (sequence_length, batch_size, vocab_size)
+    preds = model(pixel_values, 0.4, 8, use_masking=False) 
+
+    preds = preds.permute(1, 0, 2).log_softmax(2)
+
+    preds_size = torch.IntTensor([preds.size(0)] * batch_size).to(device) # preds.size(0) is now sequence_length
+
+    target_sequences_flat = []
+    target_lengths = []
+
+    # Iterate through each item in the batch
+    for i in range(batch_size): # Iterate over batch dimension
+        current_labels = labels[i]
+        non_padded_labels = [
+            label_id for label_id in current_labels.tolist()
+            if label_id != -100
+        ]
+
+        target_sequences_flat.extend(non_padded_labels)
+        target_lengths.append(len(non_padded_labels))
+
+    targets_for_ctc = torch.IntTensor(target_sequences_flat).to(device)
+    
+    lengths_for_ctc = torch.IntTensor(target_lengths).to(device)
+
+    
+    loss = criterion(preds, targets_for_ctc, preds_size, lengths_for_ctc).mean()
+
+    return loss
+    
+
+def compute_loss_loader(model, data_loader, criterion, device):
+
+  loss_total = 0
+  batch_size = data_loader.batch_size
+
+  for i, input in enumerate(data_loader):
+        pixel_values = input['pixel_values'].to(device)
+        labels = input['labels'].to(device)
+        input_dict = {'pixel_values': pixel_values, 'labels': labels}
+        loss = compute_loss(model, input_dict, batch_size, criterion, device)
+        loss_total += loss.item()
+
+  return loss_total / len(data_loader)
