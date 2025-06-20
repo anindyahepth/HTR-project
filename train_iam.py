@@ -55,8 +55,12 @@ def create_model_vitmae(nb_cls, img_size, **kwargs):
 
 
 
+    
 
 def main():
+
+  with mlflow.start_run(experiment_id=0):
+
 
     args = option.get_args_parser()
     torch.manual_seed(args.seed)
@@ -89,20 +93,19 @@ def main():
     dataset=val_dataset,
     batch_size=8,
     collate_fn=collate_fn,
-    num_workers=num_workers,
+    num_workers=0,
     drop_last=True,)
 
     #------Optimizer----------
   
     optimizer = SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=0.5)
   
-    #------Loss---------------
+    #------Loss function---------------
   
     criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
 
     #---- training loop ----
-
-  with mlflow.start_run(experiment_id=0):
+    
     n_epochs = 60
     global_step = 0
     batch_size = train_loader.batch_size
@@ -114,6 +117,8 @@ def main():
     val_cer_list = []
     val_wer_list = []
 
+    optimizer = SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=0.5)
+
 
     for epoch in range(n_epochs):
       train_loss = 0.0
@@ -122,7 +127,7 @@ def main():
 
       for i, batch in enumerate(train_loader):
         global_step = i + 1 + epoch * len(train_loader)
-        optimizer, current_lr = utils.update_lr_cos(global_step, warm_up_iter=1000, total_iter=n_epochs * len(train_loader), max_lr=1e-3, optimizer=optimizer, min_lr=1e-7)
+        optimizer, current_lr = update_lr_cos(global_step, warm_up_iter=1000, total_iter=n_epochs * len(train_loader), max_lr=1e-3, optimizer=optimizer, min_lr=1e-7)
 
         model.train()
         pixel_values = batch['pixel_values'].to(device)
@@ -197,8 +202,12 @@ def main():
     mlflow.log_param("epochs", n_epochs)
     mlflow.log_param("training_batch_size", batch_size)
 
-    
+    # print(f"Logging checkpoint {CHECKPOINT_FILENAME} to MLflow artifacts...")
+    # mlflow.log_artifact(FULL_CHECKPOINT_PATH, artifact_path="checkpoints")
+    # print(f"Checkpoint logged as artifact under 'checkpoints/{CHECKPOINT_FILENAME}'.")
+
 mlflow.end_run()
 
 if __name__ == '__main__':
     main()
+    
