@@ -7,7 +7,7 @@ def get_args_parser():
                                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--out-dir', type=str, default='./output', help='output directory')
-    #parser.add_argument('--pth_path', type=str, default='/content/HTR-project/best_CER.pth')
+    #parser.add_argument('--pth_path', type=str, default='./chekpoint/best_CER.pth')
     parser.add_argument('--dict_path', type=str, default='./dict_alph')
     parser.add_argument('--model-type', type=str, default='vitmae', help='choice of model')
     parser.add_argument('--train-bs', default=128, type=int, help='train batch size')
