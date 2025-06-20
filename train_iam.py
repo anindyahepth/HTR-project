@@ -178,7 +178,8 @@ def main():
                     }
 
       torch.save(checkpoint, checkpoint_path_epoch)
-
+      
+      CHECKPOINT_FILENAME = "epoch_model_checkpoint.pth"
       print(f"Logging checkpoint {CHECKPOINT_FILENAME} to MLflow artifacts...")
       mlflow.log_artifact(checkpoint_path_epoch, artifact_path="checkpoints")
       print(f"Checkpoint logged as artifact under 'checkpoints/{CHECKPOINT_FILENAME}'.")
