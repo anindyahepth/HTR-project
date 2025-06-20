@@ -9,7 +9,7 @@ import os
 import json
 import valid
 from utils import utils
-from utils import sam
+from utils.sam import SAM
 from utils import option
 from model.ViT_Resnet import MaskedAutoencoderViT
 from functools import partial
@@ -17,7 +17,9 @@ import argparse
 from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
-from dataset_preprocess import augmentation_pipeline, IAMDataset
+from dataset_preprocess import IAMDataset
+from torch.utils.data import DataLoader
+from torch.nn.utils.rnn import pad_sequence
 
 
 def create_datasets_HF(data_path = "Teklia/IAM-line"):
@@ -28,8 +30,16 @@ def create_datasets_HF(data_path = "Teklia/IAM-line"):
   dataset_test = dataset["test"]
 
   return dataset_train, dataset_val, dataset_test
-    
 
+
+def collate_fn(batch):
+    """Collate function to handle padding within a batch."""
+    pixel_values = torch.stack([item["pixel_values"] for item in batch])
+    labels = [item["labels"] for item in batch]
+    padded_labels = pad_sequence(labels, batch_first=True, padding_value=-100)
+    return {"pixel_values": pixel_values, "labels": padded_labels}
+
+    
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
@@ -44,39 +54,6 @@ def create_model_vitmae(nb_cls, img_size, **kwargs):
     return model
 
 
-def compute_loss(args, model_type, model, image, batch_size, criterion, text, length):
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-     
-    if model_type == 'vitmae':
-       preds = model(image, args.mask_ratio, args.max_span_length, use_masking=True)
-        
-    elif model_type == 'vitdw':
-       preds = model(image)
-    
-    preds = preds.float()
-    # print(f"preds shape: {preds.shape}")
-    preds_size = torch.IntTensor([preds.size(1)] * batch_size).to(device)
-    preds = preds.permute(1, 0, 2).log_softmax(2)
-
-    torch.backends.cudnn.enabled = False
-    loss = criterion(preds, text.to(device), preds_size, length.to(device)).mean()
-    torch.backends.cudnn.enabled = True
-    return loss
-
-def dict_from_file_to_list(filepath):
-    try:
-        with open(filepath, 'r') as file:
-            dict_str = file.read()
-            dictionary = ast.literal_eval(dict_str)
-            return dictionary
-
-    except FileNotFoundError:
-        print(f"File '{filepath}' not found.")
-        return None
-    except ValueError as e:
-        print(f"Error parsing the file: {e}")
-        return None
 
 
 def main():
@@ -84,157 +61,144 @@ def main():
     args = option.get_args_parser()
     torch.manual_seed(args.seed)
 
-    args.save_dir = os.path.join(args.out_dir, args.exp_name)
-    os.makedirs(args.save_dir, exist_ok=True)
-
-    logger = utils.get_logger(args.save_dir)
-    logger.info(json.dumps(vars(args), indent=4, sort_keys=True))
-    writer = SummaryWriter(args.save_dir)
-
-    model_type = args.model_type
-
-    if model_type == 'vitmae':
-       model = create_model_vitmae(nb_cls=args.nb_cls, img_size=args.img_size[::-1])
-        
-    elif model_type == 'vitdw':
-       model = create_model_vitdw(image_size= (64, 512), num_classes=args.nb_cls)
-
-    # ckpt = torch.load(args.pth_path, map_location='cpu', weights_only = True)
-
-    # model_dict = OrderedDict()
-    # if 'model' in ckpt:
-    #     ckpt = ckpt['model']
-
-    # unexpected_keys = ['state_dict_ema', 'optimizer']
-    # for key in unexpected_keys:
-    #     if key in ckpt:
-    #         del ckpt[key]
-
-
-    # model.load_state_dict(ckpt, strict= False)
+    #-----Model and Dataset ---
     
-    
-    
-
-    total_param = sum(p.numel() for p in model.parameters())
-    logger.info('total_param is {}'.format(total_param))
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    logger.info(f"Using device: {device}")
 
-    model.train()
+    model = create_model_vitmae(nb_cls=96, img_size=[64, 1024])
     model.to(device)
     
-    model_ema = utils.ModelEma(model, args.ema_decay)
-    model.zero_grad()
-
-    logger.info('Loading train loader...')
-    dataset_iam = load_dataset("Teklia/IAM-line")
-
-    dataset_iam_train = dataset_iam["train"]
-    transform = transforms.Compose([ transforms.Resize((64, 512)),
-    #ErosionDilationColorJitterTransform(brightness=0.4, contrast=0.4, saturation=0.4, hue=0.2),
-    ErosionDilationElasticRandomTransform(),
-    transforms.ToTensor(),
-    ])
-    train_dataset = HFImageDataset(dataset_iam_train, transform=transform)
-
-
-    
-    train_loader = torch.utils.data.DataLoader(train_dataset,
-                                               batch_size=args.train_bs,
-                                               shuffle=True,
-                                               pin_memory=True,
-                                               num_workers=args.num_workers,
-                                               )
-    train_iter = cycle_data(train_loader)
-
-    logger.info('Loading val loader...')
-    dataset_iam_val = dataset_iam["validation"]
-    val_dataset = HFImageDataset(dataset_iam_val, transform=transform)
-    val_loader = torch.utils.data.DataLoader(val_dataset,
-                                             batch_size=args.val_bs,
-                                             shuffle=False,
-                                             pin_memory=True,
-                                             num_workers=args.num_workers)
-
-    optimizer = sam.SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=args.weight_decay)
-    criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
-    alpha = dict_from_file_to_list(args.dict_path)
+    dataset_iam_train, dataset_iam_val, dataset_iam_test = utils.create_datasets_HF()
+    alpha = utils.dict_from_file_to_list(args.dict_path)
     converter = utils.CTCLabelConverter(alpha)
 
-    best_cer, best_wer = 1e+6, 1e+6
-    train_loss = 0.0
+    train_dataset = IAMDataset(dataset_iam_train, converter, augment=True, transform = transforms.ToTensor())
+    val_dataset = IAMDataset(dataset_iam_val, converter, augment=True, transform = transforms.ToTensor())
+    
+    #-----Dataloaders------
 
-    #### ---- train & eval ---- ####
+    train_loader = DataLoader(
+    dataset=train_dataset,
+    batch_size=128,
+    shuffle=True,
+    collate_fn=collate_fn,
+    num_workers=0,
+    drop_last=True,)
 
-    for nb_iter in range(1, args.total_iter):
+    val_loader = DataLoader(
+    dataset=val_dataset,
+    batch_size=8,
+    collate_fn=collate_fn,
+    num_workers=num_workers,
+    drop_last=True,)
 
-        optimizer, current_lr = utils.update_lr_cos(nb_iter, args.warm_up_iter, args.total_iter, args.max_lr, optimizer)
+    #------Optimizer----------
+  
+    optimizer = SAM(model.parameters(), torch.optim.AdamW, lr=1e-7, betas=(0.9, 0.99), weight_decay=0.5)
+  
+    #------Loss---------------
+  
+    criterion = torch.nn.CTCLoss(reduction='none', zero_infinity=True)
 
-        optimizer.zero_grad()
-        batch = next(train_iter)
-        image = batch[0].to(device)
-        text, length = converter.encode(batch[1])
-        text, length = text.to(device), length.to(device) #text,length moved to device
-        batch_size = image.size(0)
-        loss = compute_loss(args, model_type, model, image, batch_size, criterion, text, length)
+    #---- training loop ----
+
+  with mlflow.start_run(experiment_id=0):
+    n_epochs = 60
+    global_step = 0
+    batch_size = train_loader.batch_size
+
+
+
+    train_loss_list = []
+    val_loss_list = []
+    val_cer_list = []
+    val_wer_list = []
+
+
+    for epoch in range(n_epochs):
+      train_loss = 0.0
+      examples_seen = 0
+      examples_seen_val = 0
+
+      for i, batch in enumerate(train_loader):
+        global_step = i + 1 + epoch * len(train_loader)
+        optimizer, current_lr = utils.update_lr_cos(global_step, warm_up_iter=1000, total_iter=n_epochs * len(train_loader), max_lr=1e-3, optimizer=optimizer, min_lr=1e-7)
+
+        model.train()
+        pixel_values = batch['pixel_values'].to(device)
+        labels = batch['labels'].to(device)
+        input_dict = {'pixel_values': pixel_values, 'labels': labels}
+        loss = compute_loss(model, input_dict, batch_size, criterion, device)
         loss.backward()
         optimizer.first_step(zero_grad=True)
-        compute_loss(args, model_type, model, image, batch_size, criterion, text, length).backward()
+        loss = compute_loss(model, input_dict, batch_size, criterion, device)
+        loss.backward()
         optimizer.second_step(zero_grad=True)
-        model.zero_grad()
-        model_ema.update(model, num_updates=nb_iter / 2)
+        optimizer.zero_grad()
+
         train_loss += loss.item()
+        examples_seen += batch["pixel_values"].shape[0]
 
-        if nb_iter % args.print_iter == 0:
-            train_loss_avg = train_loss / args.print_iter
+        if global_step % 50 == 0:
+          train_loss_list.append(train_loss/50)
+          print(f"Training loss after step {global_step}:", train_loss/50)
+          print(f"Learning rate after step {global_step}:", current_lr)
+          trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+          print(f"Trainable parameters after step {global_step}:", trainable_params)
+          train_loss = 0.0
 
-            logger.info(f'Iter : {nb_iter} \t LR : {current_lr:0.5f} \t training loss : {train_loss_avg:0.5f} \t ' )
+        if global_step == 1 or global_step % 100 == 0:
+          model.eval()
+          val_cer = 0.0
+          val_wer = 0.0
+          with torch.no_grad():
+            val_cer, val_wer = calc_metric_loader(val_loader, model, device, converter)
+            loss_val = compute_loss_loader(model, val_loader, criterion, device)
+            val_cer_list.append(val_cer)
+            val_wer_list.append(val_wer)
+            val_loss_list.append(loss_val)
+            print(f"Validation CER after step {global_step}:", val_cer)
+            print(f"Validation WER after step {global_step}:", val_wer)
+            print(f"Validation Loss after step {global_step}:", loss_val)
+            model.train()
 
-            writer.add_scalar('./Train/lr', current_lr, nb_iter)
-            writer.add_scalar('./Train/train_loss', train_loss_avg, nb_iter)
-            train_loss = 0.0
 
-        if nb_iter % args.eval_iter == 0:
-            model.eval()
-            with torch.no_grad():
-                val_loss, val_cer, val_wer, preds, labels = valid.validation(model_ema.ema,
-                                                                             criterion,
-                                                                             val_loader,
-                                                                             converter,
-                                                                             device)
 
-                if val_cer < best_cer:
-                    logger.info(f'CER improved from {best_cer:.4f} to {val_cer:.4f}!!!')
-                    best_cer = val_cer
-                    checkpoint = {
-                        'model': model.state_dict(),
-                        'state_dict_ema': model_ema.ema.state_dict(),
-                        'optimizer': optimizer.state_dict(),
+      print(f"Model trained for {epoch + 1} epoch(s)")
+
+      checkpoint_filename_epoch = f'epoch_{epoch}_checkpoint.pth'
+      checkpoint_path_epoch = os.path.join('/content/', checkpoint_filename_epoch)
+      checkpoint = { 'model': model.state_dict(),
+                'optimizer': optimizer.state_dict(),
                     }
-                    torch.save(checkpoint, os.path.join(args.save_dir, 'best_CER.pth'))
 
-                if val_wer < best_wer:
-                    logger.info(f'WER improved from {best_wer:.4f} to {val_wer:.4f}!!!')
-                    best_wer = val_wer
-                    checkpoint = {
-                        'model': model.state_dict(),
-                        'state_dict_ema': model_ema.ema.state_dict(),
-                        'optimizer': optimizer.state_dict(),
-                    }
-                    torch.save(checkpoint, os.path.join(args.save_dir, 'best_WER.pth'))
+      torch.save(checkpoint, checkpoint_path_epoch)
 
-                logger.info(
-                    f'Val. loss : {val_loss:0.3f} \t CER : {val_cer:0.4f} \t WER : {val_wer:0.4f} \t ')
+      print(f"Logging checkpoint {CHECKPOINT_FILENAME} to MLflow artifacts...")
+      mlflow.log_artifact(checkpoint_path_epoch, artifact_path="checkpoints")
+      print(f"Checkpoint logged as artifact under 'checkpoints/{CHECKPOINT_FILENAME}'.")
 
-                writer.add_scalar('./VAL/CER', val_cer, nb_iter)
-                writer.add_scalar('./VAL/WER', val_wer, nb_iter)
-                writer.add_scalar('./VAL/bestCER', best_cer, nb_iter)
-                writer.add_scalar('./VAL/bestWER', best_wer, nb_iter)
-                writer.add_scalar('./VAL/val_loss', val_loss, nb_iter)
-                model.train()
 
+    for i in range(len(val_cer_list)):
+        mlflow.log_metrics(
+          { "val_cer": val_cer_list[i],
+            "val_wer": val_wer_list[i],
+            "val_loss": val_loss_list[i]
+          },step = i+1
+        )
+
+    for j in range(len(train_loss_list)):
+        mlflow.log_metrics(
+          { "train_loss": train_loss_list[j]
+          },step = j+1
+        )
+
+    #mlflow.log_param("learning_rate", lr)
+    mlflow.log_param("epochs", n_epochs)
+    mlflow.log_param("training_batch_size", batch_size)
+
+    
+mlflow.end_run()
 
 if __name__ == '__main__':
     main()
