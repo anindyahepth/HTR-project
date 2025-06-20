@@ -135,8 +135,3 @@ class IAMDataset(Dataset):
         encoding = {"pixel_values": pixel_values, "labels": labels}
 
         return encoding
-
-
-
-
-        
