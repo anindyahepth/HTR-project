@@ -110,6 +110,7 @@ class IAMDataset(Dataset):
         self.dataset = dataset
         self.augment = augment
         self.transform = transform
+        self.converter = converter
 
     def __len__(self):
         return len(self.dataset)
@@ -130,7 +131,7 @@ class IAMDataset(Dataset):
 
 
         # Tokenize the label
-        labels, length = converter.encode(label)
+        labels, length = self.converter.encode(label)
 
         encoding = {"pixel_values": pixel_values, "labels": labels}
 
