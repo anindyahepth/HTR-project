@@ -8,14 +8,6 @@ from einops.layers.torch import Rearrange
 
 #The input image shape should be (3, 64, 1024)
 
-import timm
-import torch
-import torch.nn as nn
-from einops import rearrange, repeat
-from einops.layers.torch import Rearrange
-
-#The input image shape should be (3, 64, 1024)
-
 class ResNet50_custom_feat_ex(nn.Module):
     def __init__(self, embed_dim=1024, pretrained = True):
         super().__init__()
