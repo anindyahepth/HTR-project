@@ -45,9 +45,9 @@ def collate_fn(batch):
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
-                                 embed_dim=768,
+                                 embed_dim=1024,
                                  depth=4,
-                                 num_heads=6,
+                                 num_heads=8,
                                  mlp_ratio=4,
                                  pre_trained=True,
                                  norm_layer=partial(nn.LayerNorm, eps=1e-6),
