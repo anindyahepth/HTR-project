@@ -55,11 +55,12 @@ class ResNet50_feat_ex(nn.Module):
 
         #Changing feature_dim to desired value
         self.feature_modifier_conv = nn.Sequential(
-            nn.Conv2d(512, embed_dim, kernel_size=(8,1), stride=1, padding=0),
+            nn.Conv2d(512, embed_dim, kernel_size= 1, stride=1, padding=0),
             nn.BatchNorm2d(embed_dim),
             nn.ReLU(inplace=True)
         )
-
+        self.maxpool = nn.MaxPool2d(kernel_size=(8,1), stride=1, padding=0)
+        
         
 
     def forward(self, x):
@@ -68,7 +69,7 @@ class ResNet50_feat_ex(nn.Module):
         modified_features = self.feature_modifier_conv(features_from_layer_2) # Shape: (Batch, new_feature_dim, h, w)
 
         
-        output = modified_features
+        output = self.maxpool(modified_features)
 
         return output
 
