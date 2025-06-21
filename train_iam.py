@@ -17,7 +17,7 @@ import argparse
 from collections import OrderedDict
 import ast
 from torch.utils.data import Dataset
-from dataset_preprocess import IAMDataset
+from utils.dataset_preprocess import IAMDataset
 from torch.utils.data import DataLoader
 from torch.nn.utils.rnn import pad_sequence
 
