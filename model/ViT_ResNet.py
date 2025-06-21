@@ -182,13 +182,7 @@ class MaskedAutoencoderViT(nn.Module):
         pos_embed = get_2d_sincos_pos_embed(self.embed_dim, self.grid_size)
         self.pos_embed.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
 
-        # initialize patch_embed like nn.Linear (instead of nn.Conv2d)
-        # w = self.patch_embed.proj.weight.data
-        # torch.nn.init.xavier_uniform_(w.view([w.shape[0], -1]))
-
-        # timm's trunc_normal_(std=.02) is effectively normal_(std=0.02) as cutoff is too big (2.)
-        # pos_embed = get_2d_sincos_pos_embed(self.embed_dim, [1, self.nb_query])
-        # self.qry_tokens.data.copy_(torch.from_numpy(pos_embed).float().unsqueeze(0))
+        
         torch.nn.init.normal_(self.mask_token, std=.02)
 
         # initialize nn.Linear and nn.LayerNorm
