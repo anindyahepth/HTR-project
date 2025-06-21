@@ -18,24 +18,25 @@ class ResNet18_feat_ex(nn.Module):
         else:
           self.backbone = timm.create_model('resnet18.a1_in1k', pretrained=False, features_only=True)
 
-        # Input channels: 256 (from ResNet18 Layer 3)
+        # Input channels: 128 (from ResNet18 Layer 2)
         # Output channels: embed_dim (e.g., 768)
-        # self.feature_modifier_conv = nn.Sequential(
-        #     nn.Conv2d(256, embed_dim, kernel_size=1, stride=1, padding=0),
-        #     nn.BatchNorm2d(embed_dim),
-        #     nn.ReLU(inplace=True)
-        # )
+        self.feature_modifier_conv = nn.Sequential(
+            nn.Conv2d(128, embed_dim, kernel_size=1, stride=1, padding=0),
+            nn.BatchNorm2d(embed_dim),
+            nn.ReLU(inplace=True)
+        )
+        self.maxpool = nn.MaxPool2d(kernel_size=(8,1), stride=1, padding=0)
+        
 
 
 
     def forward(self, x):
         feature_maps = self.backbone(x)
-        features_from_layer_3 = feature_maps[3] # Shape: (Batch, 256, H, W)
-        #modified_features = self.feature_modifier_conv(features_from_layer3) # Shape: (Batch, new_feature_dim, H, W)
-        modified_features = features_from_layer_3
-        modified_features = rearrange(modified_features, 'b c h w -> b c 1 (h w)')
+        features_from_layer_2 = feature_maps[2] # Shape: (Batch, 128, H, W)
+        modified_features = self.feature_modifier_conv(features_from_layer_2) # Shape: (Batch, new_feature_dim, H, W)
+        
 
-        output = modified_features
+        output = self.maxpool(modified_features)
 
         return output
 
