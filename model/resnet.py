@@ -19,20 +19,20 @@ class ResNet50_custom_feat_ex(nn.Module):
           self.backbone = timm.create_model('resnet50', pretrained=False, features_only=True)
 
 
-        self.maxpool_1 = nn.MaxPool2d(kernel_size= 3, stride= (4,1), padding=1)
-        self.maxpool_2 = nn.MaxPool2d(kernel_size= 3, stride= (2,1), padding=1)
+        self.maxpool = nn.MaxPool2d(kernel_size= 3, stride= (2,1), padding=1)
       
 
 
 
     def forward(self, x):
         x = self.backbone.conv1(x)
-        x = self.maxpool_1(x)
         x = self.backbone.layer1(x)
+        x = self.maxpool(x)
         x = self.backbone.layer2(x)
+        x = self.maxpool(x)
         x = self.backbone.layer3(x)
         
-        output = self.maxpool_2(x)
+        output = self.maxpool(x)
 
         return output
 
