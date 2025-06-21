@@ -9,12 +9,11 @@ import ast
 
 from utils import utils
 from utils import option
-from model.ViT_Resnet import MaskedAutoencoderViT
+from model.ViT_ResNet import MaskedAutoencoderViT
 from collections import OrderedDict
 from functools import partial
 from datasets import load_dataset
 from torchvision import transforms
-from augmentations_iam import ErosionDilationElasticRandomTransform
 from torch.utils.data import Dataset
 
 
