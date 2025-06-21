@@ -4,6 +4,46 @@ import timm
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
+#------Final Feature Extractor ----------
+
+#The input image shape should be (3, 64, 1024)
+
+import timm
+import torch
+import torch.nn as nn
+from einops import rearrange, repeat
+from einops.layers.torch import Rearrange
+
+#The input image shape should be (3, 64, 1024)
+
+class ResNet50_custom_feat_ex(nn.Module):
+    def __init__(self, embed_dim=1024, pretrained = True):
+        super().__init__()
+        if pretrained:
+          self.backbone = timm.create_model('resnet50', pretrained=True, features_only=True)
+          for param in self.backbone.parameters():
+            param.requires_grad = False
+        else:
+          self.backbone = timm.create_model('resnet50', pretrained=False, features_only=True)
+
+
+        self.maxpool_1 = nn.MaxPool2d(kernel_size= 3, stride= (4,1), padding=1)
+        self.maxpool_2 = nn.MaxPool2d(kernel_size= 3, stride= (2,1), padding=1)
+      
+
+
+
+    def forward(self, x):
+        x = self.backbone.conv1(x)
+        x = self.maxpool_1(x)
+        x = self.backbone.layer1(x)
+        x = self.backbone.layer2(x)
+        x = self.backbone.layer3(x)
+        
+        output = self.maxpool_2(x)
+
+        return output
+
 #------ResNet18----------
 
 class ResNet18_feat_ex(nn.Module):
