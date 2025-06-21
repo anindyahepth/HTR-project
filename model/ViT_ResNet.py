@@ -144,7 +144,7 @@ class MaskedAutoencoderViT(nn.Module):
     def __init__(self,
                  nb_cls=80,
                  img_size=[512, 32] ,
-                 embed_dim=256,
+                 embed_dim=1024,
                  depth=24,
                  num_heads=16,
                  mlp_ratio=4.,
@@ -156,7 +156,7 @@ class MaskedAutoencoderViT(nn.Module):
         # MAE encoder specifics
         self.layer_norm = LayerNorm()
         self.pre_trained = pre_trained
-        self.patch_embed = ResNet50_feat_ex(embed_dim, pretrained = pre_trained)
+        self.patch_embed = ResNet50_custom_feat_ex(pretrained = pre_trained)
         self.embed_dim = embed_dim
         self.num_patches =128
         self.grid_size = [1, 128]
