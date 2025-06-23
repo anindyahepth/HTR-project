@@ -8,7 +8,7 @@ from einops.layers.torch import Rearrange
 #------Final Feature Extractor ----------
 
 #The input image shape should be (3, 64, 1024)
-class ResNet_feat_ex(nn.Module):
+class ResNet_custom_feat_ex(nn.Module):
     def __init__(self, embed_dim=1024, pretrained = True):
         super().__init__()
         self.embed_dim = embed_dim
