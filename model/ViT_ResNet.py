@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.vision_transformer import Mlp, DropPath
-from model.resnet import ResNet50_custom_feat_ex
+from model.resnet import ResNet_custom_feat_ex
 import numpy as np
 from functools import partial
 
@@ -155,7 +155,7 @@ class MaskedAutoencoderViT(nn.Module):
         # MAE encoder specifics
         self.layer_norm = LayerNorm()
         self.pre_trained = pre_trained
-        self.patch_embed = ResNet50_custom_feat_ex(pretrained = pre_trained)
+        self.patch_embed = ResNet_custom_feat_ex(pretrained = pre_trained)
         self.embed_dim = embed_dim
         self.num_patches =128
         self.grid_size = [1, 128]
