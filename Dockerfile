@@ -14,8 +14,10 @@ RUN pip install --no-cache-dir --upgrade pip && \
 # Copy the rest of your application code
 # train.py will be copied to /htr/train.py
 COPY train.py .
+COPY dict_alph .
 # The utils folder will be copied to /htr/utils/
 COPY utils/ utils/
+COPY model/model/
 # run.sh will be copied to /htr/run.sh
 COPY run.sh .
 
