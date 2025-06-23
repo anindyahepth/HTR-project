@@ -1,9 +1,9 @@
 name: htr_env 
 
 channels:
-  - pytorch           
-  - nvidia          
-  - conda-forge
+  # - pytorch           
+  # - nvidia          
+  # - conda-forge
   - defaults
 
 dependencies:
