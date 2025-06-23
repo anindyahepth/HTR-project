@@ -215,3 +215,27 @@ def compute_loss_loader(model, data_loader, criterion, device):
         loss_total += loss.item()
 
   return loss_total / len(data_loader)
+
+
+
+def rgb_to_grayscale(rgb_tensor):
+
+  if rgb_tensor.shape[-3] != 3:
+    raise ValueError("Input tensor must have 3 channels (RGB) in the channel dimension.")
+
+  # Grayscale conversion weights
+  # These weights are standard for converting RGB to luminance (grayscale)
+  # R: 0.2989, G: 0.5870, B: 0.1140
+  # Ensure the weights are on the same device as the input tensor
+  weights = torch.tensor([0.2989, 0.5870, 0.1140], device=rgb_tensor.device, dtype=rgb_tensor.dtype)
+
+  # Reshape weights for broadcasting: (3,) -> (3, 1, 1) for (C, H, W) input
+  # or (1, 3, 1, 1) for (B, C, H, W) input
+  if rgb_tensor.dim() == 3: # (C, H, W)
+    grayscale_tensor = torch.sum(rgb_tensor * weights.view(3, 1, 1), dim=0, keepdim=True)
+  elif rgb_tensor.dim() == 4: # (B, C, H, W)
+    grayscale_tensor = torch.sum(rgb_tensor * weights.view(1, 3, 1, 1), dim=1, keepdim=True)
+  else:
+    raise ValueError("Input tensor must be 3D (C, H, W) or 4D (B, C, H, W).")
+
+  return grayscale_tensor
