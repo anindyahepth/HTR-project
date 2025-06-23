@@ -102,6 +102,76 @@ def augmentation_pipeline(image, p=0.5):
 
     return image
 
+
+#-------Simpler Augmentation ---------
+
+class ErosionDilationColorJitterTransform:
+    """
+    Applies erosion, dilation, and color jitter augmentations to PIL Images or torch tensors.
+    """
+
+    def __init__(self, erosion_kernel_size=(3, 3), erosion_iterations=1,
+                 dilation_kernel_size=(3, 3), dilation_iterations=1,
+                 brightness=0, contrast=0, saturation=0, hue=0):
+        """
+        Initializes the augmentations.
+
+        Args:
+            erosion_kernel_size (tuple): Size of the erosion kernel (width, height).
+            erosion_iterations (int): Number of erosion iterations.
+            dilation_kernel_size (tuple): Size of the dilation kernel (width, height).
+            dilation_iterations (int): Number of dilation iterations.
+            brightness (float): Brightness jitter factor.
+            contrast (float): Contrast jitter factor.
+            saturation (float): Saturation jitter factor.
+            hue (float): Hue jitter factor.
+        """
+        self.erosion_kernel = np.ones(erosion_kernel_size, np.uint8)
+        self.erosion_iterations = erosion_iterations
+        self.dilation_kernel = np.ones(dilation_kernel_size, np.uint8)
+        self.dilation_iterations = dilation_iterations
+        self.brightness = brightness
+        self.contrast = contrast
+        self.saturation = saturation
+        self.hue = hue
+
+    def __call__(self, img):
+        """
+        Applies augmentations to the input PIL Image or torch tensor.
+
+        Args:
+            img (PIL.Image.Image or torch.Tensor): Input image.
+
+        Returns:
+            PIL.Image.Image or torch.Tensor: Augmented image.
+        """
+        if isinstance(img, torch.Tensor):
+            img_pil = TF.to_pil_image(img)
+        else:
+            img_pil = img
+
+        img_np = np.array(img_pil)
+
+        if random.random() < 0.7:
+            img_np = cv2.erode(img_np, self.erosion_kernel, iterations=self.erosion_iterations)
+
+        if random.random() < 0.7:
+            img_np = cv2.dilate(img_np, self.dilation_kernel, iterations=self.dilation_iterations)
+
+        img_pil = Image.fromarray(img_np)
+
+        img_pil = TF.adjust_brightness(img_pil, 1 + random.uniform(-self.brightness, self.brightness))
+        img_pil = TF.adjust_contrast(img_pil, 1 + random.uniform(-self.contrast, self.contrast))
+        img_pil = TF.adjust_saturation(img_pil, 1 + random.uniform(-self.saturation, self.saturation))
+        img_pil = TF.adjust_hue(img_pil, random.uniform(-self.hue, self.hue))
+
+        if isinstance(img, torch.Tensor):
+            return TF.to_tensor(img_pil)
+        else:
+            return img_pil
+
+
+
 #-----Torch Dataset class ---------
 
 class IAMDataset(Dataset):
