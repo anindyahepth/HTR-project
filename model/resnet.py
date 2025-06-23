@@ -1,40 +1,53 @@
 import torch
 import torch.nn as nn
 import timm
+from utils import utils
 from einops import rearrange, repeat
 from einops.layers.torch import Rearrange
 
 #------Final Feature Extractor ----------
 
 #The input image shape should be (3, 64, 1024)
-
-class ResNet50_custom_feat_ex(nn.Module):
+class ResNet_feat_ex(nn.Module):
     def __init__(self, embed_dim=1024, pretrained = True):
         super().__init__()
-        if pretrained:
+        self.embed_dim = embed_dim
+        self.pretrained = pretrained
+        if self.pretrained:
           self.backbone = timm.create_model('resnet50', pretrained=True, features_only=True)
           for param in self.backbone.parameters():
             param.requires_grad = False
         else:
-          self.backbone = timm.create_model('resnet50', pretrained=False, features_only=True)
-
+          self.backbone = ResNet18(embed_dim)
 
         self.maxpool = nn.MaxPool2d(kernel_size= 3, stride= (2,1), padding=1)
-      
+        self.linear = nn.Linear(in_features = 1024, out_features = embed_dim)
+        self.maxpool_18 = nn.MaxPool2d(kernel_size= 1, stride= (1,2), padding=0)
+
 
 
 
     def forward(self, x):
+      if self.pretrained:
         x = self.backbone.conv1(x)
         x = self.backbone.layer1(x)
         x = self.maxpool(x)
         x = self.backbone.layer2(x)
         x = self.maxpool(x)
         x = self.backbone.layer3(x)
-        
-        output = self.maxpool(x)
 
-        return output
+        output = self.maxpool(x)
+        b,c,h,w = output.shape
+        output = rearrange(output, 'b c h w -> b h w c')
+        output = self.linear(output)
+        output = rearrange(output, 'b h w c -> b c h w')
+
+      else:
+        x = utils.rgb_to_grayscale(x)
+        x = self.backbone(x)
+        output = self.maxpool_18(x)
+        
+      return output
 
 #------ResNet18----------
 
