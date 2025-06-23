@@ -155,7 +155,7 @@ class MaskedAutoencoderViT(nn.Module):
         # MAE encoder specifics
         self.layer_norm = LayerNorm()
         self.pre_trained = pre_trained
-        self.patch_embed = ResNet_custom_feat_ex(pretrained = pre_trained)
+        self.patch_embed = ResNet_custom_feat_ex(embed_dim=embed_dim, pretrained = pre_trained)
         self.embed_dim = embed_dim
         self.num_patches =128
         self.grid_size = [1, 128]
