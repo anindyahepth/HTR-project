@@ -45,7 +45,7 @@ class ResNet_custom_feat_ex(nn.Module):
       else:
         x = utils.rgb_to_grayscale(x)
         x = self.backbone(x)
-        output = self.maxpool_18(x)
+        #output = self.maxpool_18(x)
         
       return output
 
