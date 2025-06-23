@@ -171,7 +171,6 @@ class ErosionDilationColorJitterTransform:
             return img_pil
 
 
-
 #-----Torch Dataset class ---------
 
 class IAMDataset(Dataset):
