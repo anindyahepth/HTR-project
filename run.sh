@@ -28,11 +28,11 @@ echo "Starting training job with remote MLflow tracking..."
 
 python3 train_iam.py --exp-name iam \
 --max-lr 1e-3 \
---train-bs 128 \
+--train-bs 32 \
 --val-bs 8 \
 --weight-decay 0.5 \
 --img-size 512 64 \
---total-iter 100000 \
+--total-iter 10000 \
 #--data_dir /opt/ml/input/data/training
 
 
