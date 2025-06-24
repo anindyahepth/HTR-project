@@ -6,7 +6,7 @@ We consider different versions of the following basic model for this task - a Vi
 
 For the most basic model ViT_ResNet, the model ViT_Resnet yields the following test scores after training for 10000 steps (~50 epochs):
 
-test_CER = 7.0 , test_WER = 21.7 . 
+test_CER = 0.07 , test_WER = 0.21 . 
  
 The following figure compares the performance of a pair of such models with the standard ViT on the metrics CER (Character Error Rate) and WER (Word Error Rate) in course of the training (metrics are computed after every 100 steps of training). 
 
