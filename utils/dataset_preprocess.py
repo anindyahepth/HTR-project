@@ -6,7 +6,6 @@ from torchvision import transforms
 
 import os
 import json
-import valid
 from utils import utils
 from utils import sam
 from utils import option
