@@ -13,7 +13,7 @@ The following figure compares the performance of a pair of such models with the 
 
 ![HRT_cer_wer](https://github.com/user-attachments/assets/1f37f293-3562-4663-8e14-ff02f2436c40)
 
-The model ViT_Resnet_mask implements masking of the input tokens (in a fashion similar to https://arxiv.org/abs/2409.08573), 
+The model ViT_Resnet_mask implements masking of the input tokens (the masking strategy is similar to https://arxiv.org/abs/2409.08573), 
 while ViT_Resnet does not. The former model performs better on the WER metric in the long-run. 
 
 
