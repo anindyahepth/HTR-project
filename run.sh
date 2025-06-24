@@ -1,16 +1,16 @@
 #!/bin/bash
 
 # Exit immediately if a command exits with a non-zero status.
-set -e
+# set -e
 
 echo "Starting training job with remote MLflow tracking..."
 
 # --- MLflow Configuration for Remote Server ---
 
-export MLFLOW_TRACKING_URI="http://your-mlflow-server.com:5000"
+# export MLFLOW_TRACKING_URI="http://your-mlflow-server.com:5000"
 
-export MLFLOW_TRACKING_USERNAME="your_mlflow_username"
-export MLFLOW_TRACKING_PASSWORD="your_mlflow_password"
+# export MLFLOW_TRACKING_USERNAME="your_mlflow_username"
+# export MLFLOW_TRACKING_PASSWORD="your_mlflow_password"
 
 # export MLFLOW_TRACKING_TOKEN="your_mlflow_api_token"
 
