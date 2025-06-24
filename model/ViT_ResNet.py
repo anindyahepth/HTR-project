@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from timm.models.vision_transformer import Mlp, DropPath
 from model.resnet import ResNet_custom_feat_ex
-from model.resnet import Resnet18
+from model.resnet import ResNet18
 import numpy as np
 from functools import partial
 
