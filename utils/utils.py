@@ -90,7 +90,7 @@ class CTCLabelConverter(object):
             t = text_index[index:index + l]
             char_list = []
             for i in range(l):
-                if t[i]!=0 and t[i]!= -100 and (not (i > 0 and t[i - 1] == t[i])) and t[i]<len(self.character):
+                if t[i]!=0 and (not (i > 0 and t[i - 1] == t[i])) and t[i]<len(self.character):
                     char_list.append(self.character[t[i]])
             text = ''.join(char_list)
 
@@ -118,6 +118,7 @@ def format_string_for_wer(str):
 def compute_metric(pred_ids, target_ids, converter):
     # length_pred = [pred_ids.shape[1] for j in range(pred_ids.shape[0])]
     # length_target = [target_ids.shape[1] for j in range(target_ids.shape[0])]
+    target_ids = target_ids[target_ids != -100]
     pred_str= converter.decode(pred_ids, length = pred_ids.shape)
     target_str = converter.decode(target_ids, length = target_ids.shape)
     pred_str = ''.join(pred_str)
