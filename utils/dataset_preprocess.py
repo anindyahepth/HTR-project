@@ -35,16 +35,6 @@ from datasets import load_dataset
 
 #--------Augmentation pipeline---------
 def augmentation_pipeline(image, p=0.5):
-    """
-    Applies a series of image augmentations to a PIL Image with a given probability.
-
-    Args:
-        image (PIL.Image.Image): The input PIL Image.
-        p (float, optional): The probability of applying each augmentation. Defaults to 0.5.
-
-    Returns:
-        PIL.Image.Image: The augmented PIL Image.
-    """
     # 1. Random Affine Transformation
     if random.random() < p:
         affine_params = {
@@ -97,7 +87,7 @@ def augmentation_pipeline(image, p=0.5):
         image = image.filter(PIL.ImageFilter.GaussianBlur(radius=blur_radius))
 
     # 4. Resize (Always applied, but you can add probability if needed)
-    image = image.resize((1024, 64), resample=PIL.Image.Resampling.BILINEAR)
+    image = image.resize((512, 64), resample=PIL.Image.Resampling.BILINEAR)
 
     return image
 
