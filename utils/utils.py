@@ -113,92 +113,130 @@ def format_string_for_wer(str):
     str = re.sub('([ \n])+', " ", str).strip()
     return str
 
+import editdistance
 
+def compute_dist_length(pred_ids, target_str, converter):
+    pred_str= converter.decode(pred_ids.tolist(), length = [pred_ids.shape[0]])
 
-def compute_metric(pred_ids, target_ids, converter):
-    # length_pred = [pred_ids.shape[1] for j in range(pred_ids.shape[0])]
-    # length_target = [target_ids.shape[1] for j in range(target_ids.shape[0])]
-    target_ids = target_ids[target_ids != -100]
-    pred_str= converter.decode(pred_ids, length = pred_ids.shape)
-    target_str = converter.decode(target_ids, length = target_ids.shape)
     pred_str = ''.join(pred_str)
     target_str = ''.join(target_str)
 
-    edit_distance = editdistance.eval(target_str, pred_str)
+    cer_distance = editdistance.eval(pred_str, target_str)
     target_length = len(target_str)
-    if target_length == 0:
-        return 0.0 if len(pred_str) == 0 else float('inf')
-    cer = float(edit_distance) / target_length
 
-    # pred_words = clean_text(pred_str).split()
-    # target_words = clean_text(target_str).split()
     pred_words = format_string_for_wer(pred_str).split()
     target_words = format_string_for_wer(target_str).split()
 
-    wer_distance = editdistance.eval(target_words, pred_words)
-    wer = float(wer_distance) / len(target_words) if target_words else 0.0
+    wer_distance = editdistance.eval(pred_words, target_words)
+    target_word_len = len(target_words)
 
-    return {"cer": cer, "wer": wer, "pred_str": pred_str, "target_str": target_str, "pred_words":pred_words}
+    return int(cer_distance), int(target_length), int(wer_distance) , int(target_word_len)
+
+
 
 
 def calc_metric_loader(data_loader, model, device, converter):
+
     model.eval()
-    cer =[]
-    wer =[]
+    model.to(device)
+
+
+    cer_ed =0
+    cer_len_tot = 0
+    wer_ed =0
+    wer_len_tot = 0
 
     for i, batch in enumerate(data_loader):
         image = batch['pixel_values'].to(device)
-        model.to(device)
+        labels = batch['labels']
+
         output = model(image, 0.0, 1 , use_masking=False)
         pred_ids = torch.argmax(output, dim=-1)
 
         for j in range(output.shape[0]):
             output_ids = pred_ids[j]
-            input_ids = batch['labels'][j]
-            metric = compute_metric(output_ids, input_ids, converter)
-            cer.append(metric['cer'])
-            wer.append(metric['wer'])
+            target_str = labels[j]
+            cer_dist, cer_len, wer_dist, wer_len = compute_dist_length(output_ids, target_str, converter)
+            cer_ed += cer_dist
+            cer_len_tot += cer_len
+            wer_ed += wer_dist
+            wer_len_tot += wer_len
 
-    num_iters = len(cer)
-    print(num_iters)
-    sum_cer = sum(cer)
-    sum_wer = sum(wer)
 
-    return sum_cer / num_iters, sum_wer / num_iters
+
+    cer = cer_ed / float(cer_len_tot) if cer_len_tot > 0 else float('inf')
+    wer = wer_ed / float(wer_len_tot) if wer_len_tot > 0 else float('inf')
+
+    return cer, wer
+
+# def compute_metric(pred_ids, target_ids, converter):
+#     # length_pred = [pred_ids.shape[1] for j in range(pred_ids.shape[0])]
+#     # length_target = [target_ids.shape[1] for j in range(target_ids.shape[0])]
+#     target_ids = target_ids[target_ids != -100]
+#     pred_str= converter.decode(pred_ids, length = pred_ids.shape)
+#     target_str = converter.decode(target_ids, length = target_ids.shape)
+#     pred_str = ''.join(pred_str)
+#     target_str = ''.join(target_str)
+
+#     edit_distance = editdistance.eval(target_str, pred_str)
+#     target_length = len(target_str)
+#     if target_length == 0:
+#         return 0.0 if len(pred_str) == 0 else float('inf')
+#     cer = float(edit_distance) / target_length
+
+#     # pred_words = clean_text(pred_str).split()
+#     # target_words = clean_text(target_str).split()
+#     pred_words = format_string_for_wer(pred_str).split()
+#     target_words = format_string_for_wer(target_str).split()
+
+#     wer_distance = editdistance.eval(target_words, pred_words)
+#     wer = float(wer_distance) / len(target_words) if target_words else 0.0
+
+#     return {"cer": cer, "wer": wer, "pred_str": pred_str, "target_str": target_str, "pred_words":pred_words}
+
+
+# def calc_metric_loader(data_loader, model, device, converter):
+#     model.eval()
+#     cer =[]
+#     wer =[]
+
+#     for i, batch in enumerate(data_loader):
+#         image = batch['pixel_values'].to(device)
+#         model.to(device)
+#         output = model(image, 0.0, 1 , use_masking=False)
+#         pred_ids = torch.argmax(output, dim=-1)
+
+#         for j in range(output.shape[0]):
+#             output_ids = pred_ids[j]
+#             input_ids = batch['labels'][j]
+#             metric = compute_metric(output_ids, input_ids, converter)
+#             cer.append(metric['cer'])
+#             wer.append(metric['wer'])
+
+#     num_iters = len(cer)
+#     print(num_iters)
+#     sum_cer = sum(cer)
+#     sum_wer = sum(wer)
+
+#     return sum_cer / num_iters, sum_wer / num_iters
 
 #-------CTC Loss Function --------------
+
 def compute_loss(model, input_dict, batch_size, criterion, device):
 
     pixel_values = input_dict['pixel_values'].to(device)
-    labels = input_dict['labels'].to(device)
+    labels = input_dict['labels']
 
-    # For CTC, we need (sequence_length, batch_size, vocab_size)
-    preds = model(pixel_values, 0.4, 8, use_masking=False) 
+    preds = model(pixel_values, 0.4, 8, use_masking=False) # Pass labels to get decoder outputs
 
     preds = preds.permute(1, 0, 2).log_softmax(2)
 
     preds_size = torch.IntTensor([preds.size(0)] * batch_size).to(device) # preds.size(0) is now sequence_length
 
-    target_sequences_flat = []
-    target_lengths = []
+    text_for_loss, length_for_loss = converter.encode(labels)
+    text_for_loss, length_for_loss = text_for_loss.to(device), length_for_loss.to(device)
 
-    # Iterate through each item in the batch
-    for i in range(batch_size): # Iterate over batch dimension
-        current_labels = labels[i]
-        non_padded_labels = [
-            label_id for label_id in current_labels.tolist()
-            if label_id != -100
-        ]
-
-        target_sequences_flat.extend(non_padded_labels)
-        target_lengths.append(len(non_padded_labels))
-
-    targets_for_ctc = torch.IntTensor(target_sequences_flat).to(device)
-    
-    lengths_for_ctc = torch.IntTensor(target_lengths).to(device)
-
-    
-    loss = criterion(preds, targets_for_ctc, preds_size, lengths_for_ctc).mean()
+    loss = criterion(preds, text_for_loss, preds_size, length_for_loss).mean()
 
     return loss
     
@@ -210,12 +248,65 @@ def compute_loss_loader(model, data_loader, criterion, device):
 
   for i, input in enumerate(data_loader):
         pixel_values = input['pixel_values'].to(device)
-        labels = input['labels'].to(device)
+        labels = input['labels']
         input_dict = {'pixel_values': pixel_values, 'labels': labels}
         loss = compute_loss(model, input_dict, batch_size, criterion, device)
         loss_total += loss.item()
 
   return loss_total / len(data_loader)
+
+
+
+
+# def compute_loss(model, input_dict, batch_size, criterion, device):
+
+#     pixel_values = input_dict['pixel_values'].to(device)
+#     labels = input_dict['labels'].to(device)
+
+#     # For CTC, we need (sequence_length, batch_size, vocab_size)
+#     preds = model(pixel_values, 0.4, 8, use_masking=False) 
+
+#     preds = preds.permute(1, 0, 2).log_softmax(2)
+
+#     preds_size = torch.IntTensor([preds.size(0)] * batch_size).to(device) # preds.size(0) is now sequence_length
+
+#     target_sequences_flat = []
+#     target_lengths = []
+
+#     # Iterate through each item in the batch
+#     for i in range(batch_size): # Iterate over batch dimension
+#         current_labels = labels[i]
+#         non_padded_labels = [
+#             label_id for label_id in current_labels.tolist()
+#             if label_id != -100
+#         ]
+
+#         target_sequences_flat.extend(non_padded_labels)
+#         target_lengths.append(len(non_padded_labels))
+
+#     targets_for_ctc = torch.IntTensor(target_sequences_flat).to(device)
+    
+#     lengths_for_ctc = torch.IntTensor(target_lengths).to(device)
+
+    
+#     loss = criterion(preds, targets_for_ctc, preds_size, lengths_for_ctc).mean()
+
+#     return loss
+    
+
+# def compute_loss_loader(model, data_loader, criterion, device):
+
+#   loss_total = 0
+#   batch_size = data_loader.batch_size
+
+#   for i, input in enumerate(data_loader):
+#         pixel_values = input['pixel_values'].to(device)
+#         labels = input['labels'].to(device)
+#         input_dict = {'pixel_values': pixel_values, 'labels': labels}
+#         loss = compute_loss(model, input_dict, batch_size, criterion, device)
+#         loss_total += loss.item()
+
+#   return loss_total / len(data_loader)
 
 
 
