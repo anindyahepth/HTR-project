@@ -228,16 +228,11 @@ class IAMDataset(Dataset):
         if self.augment:
             image = augmentation_pipeline(image)
 
-        image = image.convert("RGB")
+        #image = image.convert("RGB")
 
         if self.transform:
             pixel_values = self.transform(image)
 
-
-
-        # Tokenize the label
-        labels, length = self.converter.encode(label)
-
-        encoding = {"pixel_values": pixel_values, "labels": labels}
+        encoding = {"pixel_values": pixel_values, "labels": label}
 
         return encoding
