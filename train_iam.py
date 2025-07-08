@@ -85,16 +85,14 @@ def main():
 
     train_loader = DataLoader(
     dataset=train_dataset,
-    batch_size=128,
+    batch_size=32,
     shuffle=True,
-    collate_fn=collate_fn,
     num_workers=0,
     drop_last=True,)
 
     val_loader = DataLoader(
     dataset=val_dataset,
     batch_size=8,
-    collate_fn=collate_fn,
     num_workers=0,
     drop_last=True,)
 
