@@ -7,7 +7,6 @@ from torchvision import transforms
 
 import os
 import json
-import valid
 from utils import utils
 from utils.sam import SAM
 from utils import option
@@ -45,7 +44,7 @@ def collate_fn(batch):
 def create_model_vitmae(nb_cls, img_size, **kwargs):
     model = MaskedAutoencoderViT(nb_cls,
                                  img_size=img_size,
-                                 embed_dim=1024,
+                                 embed_dim=768,
                                  depth=4,
                                  num_heads=8,
                                  mlp_ratio=4,
@@ -131,7 +130,7 @@ def main():
 
         model.train()
         pixel_values = batch['pixel_values'].to(device)
-        labels = batch['labels'].to(device)
+        labels = batch['labels']
         input_dict = {'pixel_values': pixel_values, 'labels': labels}
         loss = utils.compute_loss(model, input_dict, batch_size, criterion, device)
         loss.backward()
