@@ -106,7 +106,7 @@ def main():
 
     #---- training loop ----
     
-    n_epochs = 60
+    n_epochs = 50
     global_step = 0
     batch_size = train_loader.batch_size
 
