@@ -233,6 +233,9 @@ def compute_loss(model, input_dict, batch_size, criterion, device):
 
     preds_size = torch.IntTensor([preds.size(0)] * batch_size).to(device) # preds.size(0) is now sequence_length
 
+    alpha = dict_from_file_to_list('./dict_alph')
+    converter = CTCLabelConverter(alpha)
+
     text_for_loss, length_for_loss = converter.encode(labels)
     text_for_loss, length_for_loss = text_for_loss.to(device), length_for_loss.to(device)
 
